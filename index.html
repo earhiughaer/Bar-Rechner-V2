@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Bestellrechner</title>
+<title>Getränkerechner (kompakte Version)</title>
 <style>
     :root{
         --btn-size:56px;
@@ -16,7 +16,7 @@
         max-width:480px;
     }
     h1{font-size:1.5rem;text-align:center;margin-bottom:1rem;}
-    .item{display:flex;align-items:center;margin:0.5rem 0;gap:0.35rem;}
+    .item{display:flex;align-items:center;margin:0.45rem 0;gap:0.35rem;}
     .name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     button.qty{
         width:var(--btn-size);
@@ -25,7 +25,7 @@
         border:none;
         border-radius:var(--radius);
         background:#e0e0e0;
-        touch-action:manipulation; /* vermeidet 300 ms Delay */
+        touch-action:manipulation;
     }
     button.qty:active{background:#bdbdbd;}
     .count{
@@ -49,22 +49,9 @@
 </style>
 </head>
 <body>
-<h1>Bestellrechner</h1>
+<h1>Getränkerechner</h1>
 
-<div class="item" data-key="drink">
-    <span class="name">Drink (3,50&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('drink',-1)">−</button>
-    <span id="c-drink" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('drink',1)">+</button>
-</div>
-
-<div class="item" data-key="sekt">
-    <span class="name">Sekt (3,00&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('sekt',-1)">−</button>
-    <span id="c-sekt" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('sekt',1)">+</button>
-</div>
-
+<!-- Aperol -->
 <div class="item" data-key="aperol">
     <span class="name">Aperol (6,00&nbsp;€)</span>
     <button class="qty" type="button" onclick="adjust('aperol',-1)">−</button>
@@ -72,40 +59,56 @@
     <button class="qty" type="button" onclick="adjust('aperol',1)">+</button>
 </div>
 
-<div class="item" data-key="schnaps">
-    <span class="name">Schnaps (2,00&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('schnaps',-1)">−</button>
-    <span id="c-schnaps" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('schnaps',1)">+</button>
+<!-- Maß Bier/Radler -->
+<div class="item" data-key="mass">
+    <span class="name">Maß Bier/Radler (8,90&nbsp;€)</span>
+    <button class="qty" type="button" onclick="adjust('mass',-1)">−</button>
+    <span id="c-mass" class="count">0</span>
+    <button class="qty" type="button" onclick="adjust('mass',1)">+</button>
 </div>
 
-<div class="item" data-key="pfand">
-    <span class="name">Pfand (±1,00&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('pfand',-1)">−</button>
-    <span id="c-pfand" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('pfand',1)">+</button>
+<!-- Halbe Bier/Radler/Alkoholfrei -->
+<div class="item" data-key="halbe">
+    <span class="name">Halbe Bier/Radler/Alk.-frei (4,80&nbsp;€)</span>
+    <button class="qty" type="button" onclick="adjust('halbe',-1)">−</button>
+    <span id="c-halbe" class="count">0</span>
+    <button class="qty" type="button" onclick="adjust('halbe',1)">+</button>
+</div>
+
+<!-- Weinschorle -->
+<div class="item" data-key="weinschorle">
+    <span class="name">Weinschorle 0,5 (4,60&nbsp;€)</span>
+    <button class="qty" type="button" onclick="adjust('weinschorle',-1)">−</button>
+    <span id="c-weinschorle" class="count">0</span>
+    <button class="qty" type="button" onclick="adjust('weinschorle',1)">+</button>
+</div>
+
+<!-- Softdrinks & Wasser -->
+<div class="item" data-key="soft">
+    <span class="name">Softdrinks & Wasser 0,5 (3,20&nbsp;€)</span>
+    <button class="qty" type="button" onclick="adjust('soft',-1)">−</button>
+    <span id="c-soft" class="count">0</span>
+    <button class="qty" type="button" onclick="adjust('soft',1)">+</button>
 </div>
 
 <h2 id="total">Summe: 0,00&nbsp;€</h2>
 <button id="reset" type="button" onclick="resetAll()">Zurücksetzen</button>
 
 <script>
-// Preise in €
+// Preise in € (Gruppenpreise)
 const PRICES = {
-    drink: 3.5,
-    sekt: 3.0,
     aperol: 6.0,
-    schnaps: 2.0,
-    pfand: 1.0 // hier Pfandpreis anpassen
+    mass: 8.9,
+    halbe: 4.8,
+    weinschorle: 4.6,
+    soft: 3.2
 };
 
 const COUNTS = Object.fromEntries(Object.keys(PRICES).map(k => [k, 0]));
 
 function adjust(key, delta){
     COUNTS[key] += delta;
-    if(key !== 'pfand' && COUNTS[key] < 0){
-        COUNTS[key] = 0; // Getränke nie unter 0
-    }
+    if(COUNTS[key] < 0) COUNTS[key] = 0;
     document.getElementById('c-' + key).textContent = COUNTS[key];
     calcTotal();
 }
