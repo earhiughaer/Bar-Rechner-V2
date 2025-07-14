@@ -5,19 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bierzelt Rechner</title>
   <style>
-    body{font-family:sans-serif;padding:1rem;max-width:600px;margin:auto}
-    h1,h2{text-align:center}
-    .item,.drink-row{display:flex;align-items:center;margin:0.45rem 0;gap:0.5rem}
-    .item .name,.drink-row .label{flex:1}
-    button{padding:0.4rem 0.8rem;font-size:1rem;border:none;border-radius:6px;background:#e0e0e0}
-    button:active{background:#bdbdbd}
-    .count,.person-sum{width:3rem;text-align:center}
-    .person-card{border:1px solid #ccc;padding:0.8rem;margin-top:1rem;border-radius:8px}
-    .summary{margin-top:0.6rem;font-weight:bold}
-    .unassigned{color:#d32f2f}
-    .done{color:#2e7d32}
-    #reset{width:100%;margin-top:1.2rem;padding:0.8rem;font-size:1.1rem;background:#f44336;color:#fff}
-    #reset:active{background:#d32f2f}
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 600px;
+      margin: auto;
+      font-size: 1rem; /* Basis-Schriftgröße für den Körper */
+    }
+    h1, h2 {
+      text-align: center;
+      font-size: 1.8rem; /* Grössere Überschriften */
+    }
+    .item, .drink-row {
+      display: flex;
+      align-items: center;
+      margin: 0.6rem 0; /* Mehr vertikaler Abstand */
+      gap: 0.8rem; /* Mehr Abstand zwischen Elementen */
+    }
+    .item .name, .drink-row .label {
+      flex: 1;
+      font-size: 1.1rem; /* Grössere Schrift für Namen/Labels */
+    }
+    button {
+      padding: 0.6rem 1.2rem; /* Grösseres Padding für Buttons */
+      font-size: 1.1rem; /* Grössere Schrift in Buttons */
+      border: none;
+      border-radius: 6px;
+      background: #e0e0e0;
+    }
+    button:active {
+      background: #bdbdbd;
+    }
+    .count, .person-sum {
+      width: 4rem; /* Breitere Zählerfelder */
+      text-align: center;
+      font-size: 1.1rem; /* Grössere Schrift für Zähler */
+    }
+    .person-card {
+      border: 1px solid #ccc;
+      padding: 1rem; /* Mehr Padding für Karten */
+      margin-top: 1.2rem; /* Mehr Abstand über Karten */
+      border-radius: 8px;
+    }
+    .summary {
+      margin-top: 0.8rem;
+      font-weight: bold;
+      font-size: 1.2rem; /* Grössere Schrift für Summe */
+    }
+    .unassigned {
+      color: #d32f2f;
+      font-size: 1.1rem; /* Grössere Schrift für Offene Mengen */
+    }
+    .done {
+      color: #2e7d32;
+      font-size: 1.1rem; /* Grössere Schrift für Erledigte Mengen */
+    }
+    #reset {
+      width: 100%;
+      margin-top: 1.5rem; /* Mehr Abstand */
+      padding: 1rem; /* Grösseres Padding */
+      font-size: 1.2rem; /* Grössere Schrift für Reset-Button */
+      background: #f44336;
+      color: #fff;
+    }
+    #reset:active {
+      background: #d32f2f;
+    }
+
+    /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
+    @media (max-width: 480px) {
+      body {
+        font-size: 1.1rem; /* Noch etwas größere Basis-Schriftgröße auf sehr kleinen Bildschirmen */
+      }
+      h1 {
+        font-size: 2rem;
+      }
+      h2 {
+        font-size: 1.6rem;
+      }
+      .item .name, .drink-row .label, button, .count, .unassigned, .done {
+        font-size: 1.2rem; /* Größere Schrift für alle interaktiven Elemente */
+      }
+      button {
+        padding: 0.7rem 1.4rem; /* Noch mehr Padding für Buttons */
+      }
+      .count {
+        width: 4.5rem; /* Noch breitere Zählerfelder */
+      }
+      .summary {
+        font-size: 1.3rem;
+      }
+      #reset {
+        padding: 1.2rem;
+        font-size: 1.3rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -42,10 +124,10 @@ const DRINKS=[
   {key:"mass_radler", name:"🍺🍋 Maß Radler",         price:8.9},
   {key:"halbe_bier",  name:"🍻 Halbe Bier",         price:4.8},
   {key:"halbe_radler",name:"🍻🍋 Halbe Radler",       price:4.8},
-  {key:"wasser",      name:"💧 Wasser",             price:3.2},
   {key:"apfelschorle",name:"🍎 Apfelschorle",       price:3.2},
   {key:"limo_gelb",   name:"🍋 Limo gelb",          price:3.2},
   {key:"limo_weiss",  name:"⚪️ Limo weiß",          price:3.2},
+  {key:"wasser",      name:"💧 Wasser",             price:3.2},
   {key:"aperol",      name:"🍊 Aperol",             price:6.0},
   {key:"weinschorle", name:"🍷 Weinschorle 0,5",    price:4.6}
 ];
