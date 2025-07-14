@@ -5,88 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Bierzelt Rechner</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 1rem;
-      max-width: 600px;
-      margin: auto;
-      font-size: 1.1rem;
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; font-size: 1.1rem; }
+    h1, h2 { text-align: center; }
+    .item, .drink-row { display: flex; align-items: center; margin: 0.6rem 0; gap: 0.5rem; }
+    .item .name, .drink-row .label { flex: 1; }
+    button { padding: 0.6rem 1.2rem; font-size: 1.1rem; border: none; border-radius: 6px; background: #e0e0e0; }
+    button:active { background: #bdbdbd; }
+    .count { width: 3rem; text-align: center; }
+    .person-card { border: 1px solid #ccc; padding: 1rem; margin-top: 1.2rem; border-radius: 8px; }
+    .summary { margin-top: 0.8rem; font-weight: bold; }
+    .unassigned { color: #d32f2f; }
+    .done { color: #2e7d32; }
+    #reset { width: 100%; margin-top: 1.5rem; padding: 1rem; font-size: 1.2rem; background: #f44336; color: #fff; }
+    #sendOrder { width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1.2rem; background: #4caf50; color: #fff; }
+    .special-requests-container, .waitstaff-name-container {
+      margin-top: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px;
     }
-    h1, h2 {
-      text-align: center;
-    }
-    .item, .drink-row {
-      display: flex;
-      align-items: center;
-      margin: 0.6rem 0;
-      gap: 0.5rem;
-    }
-    .item .name, .drink-row .label {
-      flex: 1;
-    }
-    button {
-      padding: 0.6rem 1.2rem;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 6px;
-      background: #e0e0e0;
-    }
-    button:active {
-      background: #bdbdbd;
-    }
-    .count {
-      width: 3rem;
-      text-align: center;
-    }
-    .person-card {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-top: 1.2rem;
-      border-radius: 8px;
-    }
-    .summary {
-      margin-top: 0.8rem;
-      font-weight: bold;
-    }
-    .unassigned {
-      color: #d32f2f;
-    }
-    .done {
-      color: #2e7d32;
-    }
-    #reset {
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      font-size: 1.2rem;
-      background: #f44336;
-      color: #fff;
-    }
-    #sendOrder {
-      width: 100%;
-      margin-top: 1rem;
-      padding: 1rem;
-      font-size: 1.2rem;
-      background: #4caf50;
-      color: #fff;
-    }
-    .special-requests-container {
-      margin-top: 2rem;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      padding: 5px;
-      font-size: 1rem;
+    textarea, input[type="text"] {
+      width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px;
     }
   </style>
+  <!-- Firebase Compat (nicht Module!) -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
 <h1>Bierzelt Rechner</h1>
+
+<div class="waitstaff-name-container">
+  <h2>Bedienung:</h2>
+  <input type="text" id="waitstaffName" placeholder="Name der Bedienung eingeben..." />
+</div>
 
 <h2>1. Bestellung erfassen:</h2>
 <div id="order-section"></div>
@@ -98,30 +48,28 @@
 
 <h2>2. Personen zuordnen:</h2>
 <div id="persons"></div>
-<button id="addPersonBtn" onclick="addPerson()">➕ Person hinzufügen</button>
+<button id="addPersonBtn">➕ Person hinzufügen</button>
 
 <h2>Noch ausstehend</h2>
 <div id="remaining"></div>
 
-<button id="sendOrder" onclick="sendOrderToFirebase()">✅ Bestellung senden</button>
-<button id="reset" onclick="resetAll()">Zurücksetzen</button>
+<button id="sendOrder">✅ Bestellung senden</button>
+<button id="reset">Zurücksetzen</button>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
-
+<script>
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
     authDomain: "bierzelt-rechner.firebaseapp.com",
     databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "bierzelt-rechner",
-    storageBucket: "bierzelt-rechner.firebasestorage.app",
+    storageBucket: "bierzelt-rechner.appspot.com",
     messagingSenderId: "322991437255",
     appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
   const DRINKS = [
     { key: "mass_bier", name: "🍺 Maß Bier", price: 8.9 },
@@ -142,10 +90,7 @@
   ];
 
   const order = {};
-  DRINKS.forEach(d => order[d.key] = 0);
   let persons = [];
-
-  addPerson(); // Initial
 
   function format(eur) {
     return eur.toFixed(2).replace('.', ',') + ' €';
@@ -157,6 +102,7 @@
     let totalOrderSum = 0;
 
     DRINKS.forEach(d => {
+      order[d.key] = order[d.key] || 0;
       const div = document.createElement('div');
       div.className = 'item';
       div.innerHTML = `
@@ -173,7 +119,7 @@
   }
 
   function changeOrder(key, delta) {
-    order[key] = Math.max(0, order[key] + delta);
+    order[key] = Math.max(0, (order[key] || 0) + delta);
     document.getElementById('order-' + key).textContent = order[key];
     renderAll();
   }
@@ -189,9 +135,9 @@
   function changePersonDrink(personId, key, delta) {
     const p = persons.find(x => x.id === personId);
     if (!p) return;
-    const totalOrdered = order[key];
+    const total = order[key];
     const assigned = persons.reduce((s, per) => s + per.drinks[key], 0);
-    if (delta > 0 && assigned >= totalOrdered) return;
+    if (delta > 0 && assigned >= total) return;
     p.drinks[key] = Math.max(0, p.drinks[key] + delta);
     renderAll();
   }
@@ -202,7 +148,7 @@
     persons.forEach(p => {
       const card = document.createElement('div');
       card.className = 'person-card';
-      card.innerHTML = `<strong>${p.name}</strong><br>`;
+      card.innerHTML = `<strong>${p.name}</strong>`;
       let sum = 0;
       DRINKS.forEach(d => {
         const c = p.drinks[d.key];
@@ -244,32 +190,40 @@
   function resetAll() {
     DRINKS.forEach(d => order[d.key] = 0);
     persons = [];
-    addPerson();
     document.getElementById('specialRequests').value = '';
+    document.getElementById('waitstaffName').value = '';
+    addPerson();
     renderOrder();
   }
 
   function sendOrderToFirebase() {
-    const waitstaffName = prompt("Name der Bedienung:");
-    if (!waitstaffName) return;
+    const waitstaffName = document.getElementById('waitstaffName').value.trim();
+    if (!waitstaffName) {
+      alert("Bitte Namen der Bedienung eingeben.");
+      return;
+    }
 
-    const orderQuantities = { ...order };
-    const specialRequests = document.getElementById('specialRequests').value;
-
-    const newOrderRef = push(ref(db, 'bierzelt/orders'));
-    set(newOrderRef, {
+    const orderRef = db.ref("bierzelt/orders").push();
+    orderRef.set({
       waitstaffName,
-      orderQuantities,
-      specialRequests,
+      orderQuantities: order,
+      specialRequests: document.getElementById('specialRequests').value,
       timestamp: Date.now()
     }).then(() => {
       alert("Bestellung erfolgreich gesendet!");
       resetAll();
     }).catch(err => {
-      alert("Fehler beim Senden: " + err.message);
+      alert("Fehler: " + err.message);
     });
   }
 
+  // Button-Event-Listener
+  document.getElementById("addPersonBtn").addEventListener("click", addPerson);
+  document.getElementById("reset").addEventListener("click", resetAll);
+  document.getElementById("sendOrder").addEventListener("click", sendOrderToFirebase);
+
+  // Initial
+  addPerson();
   renderOrder();
 </script>
 
