@@ -131,7 +131,7 @@
         font-size: 1.3rem;
       }
       .delete-person-btn { /* Anpassungen für den Lösch-Button auf Mobilgeräten */
-        font-size: 1.2rem; /* Etwas größer als Desktop */
+        font-size: 1.2rem;
         padding: 0 0.6rem;
       }
     }
@@ -164,7 +164,7 @@ const DRINKS=[
   {key:"limo_weiss",  name:"⚪️ Limo weiß",          price:3.2},
   {key:"wasser",      name:"💧 Wasser",             price:3.2},
   {key:"aperol",      name:"🍊 Aperol",             price:6.0},
-  {key:"weinschorle", name:"🍷 Weinschorle",    price:4.6}
+  {key:"weinschorle", name:"🍷 Weinschorle 0,5",    price:4.6}
 ];
 
 const drinkMap=Object.fromEntries(DRINKS.map(d=>[d.key,d]));
@@ -175,8 +175,6 @@ DRINKS.forEach(d=>order[d.key]=0);
 let persons=[];
 
 // Initial eine Person hinzufügen, wenn die Seite geladen wird
-// Dies wird in renderOrder() aufgerufen, um sicherzustellen, dass immer mindestens eine Person vorhanden ist.
-// Wir fügen es jetzt direkt hier ein, um sicherzustellen, dass die ID-Logik korrekt ist, wenn nur eine Person existiert.
 addPerson(); 
 
 function format(eur){return eur.toFixed(2).replace('.',',')+' €'}
@@ -214,9 +212,6 @@ function adjustAssignmentsAfterOrderChange(key){
 }
 
 function addPerson(){
-  // Sicherstellen, dass die ID korrekt inkrementiert wird
-  // (falls Personen zwischendurch gelöscht wurden).
-  // Die ID für die erste Person ist 0, weitere IDs folgen aufsteigend.
   const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
   const person={id,name:`Person ${id+1}`,drinks:{}};
   DRINKS.forEach(d=>person.drinks[d.key]=0);
@@ -236,21 +231,22 @@ function confirmDeletePerson(personId) {
 
 function deletePerson(personId) {
   persons = persons.filter(p => p.id !== personId);
-  // Wenn alle Personen außer der ersten gelöscht wurden, sollte die erste Person bleiben.
-  // Falls die einzige verbleibende Person gelöscht würde (was durch die if-Bedingung im renderPersons
-  // verhindert werden sollte), könnte dies ein Problem sein. Wir stellen sicher, dass immer
-  // mindestens eine Person vorhanden ist, indem wir in resetAll() und am Start addPerson() aufrufen.
   renderAll();
 }
-
 
 function changePersonDrink(personId,key,delta){
   const p=persons.find(x=>x.id===personId);
   if(!p) return;
-  if(delta>0){
-    const assignedTotal=persons.reduce((s,per)=>s+per.drinks[key],0);
-    if(assignedTotal>=order[key]) return;
+
+  const totalOrdered = order[key];
+  const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[key], 0);
+  const currentAssignedToThisPerson = p.drinks[key];
+
+  if(delta > 0){ // Trying to add a drink
+    // Only allow adding if there's an unassigned quantity left globally
+    if (assignedAcrossAllPersons >= totalOrdered) return;
   }
+
   p.drinks[key]=Math.max(0,p.drinks[key]+delta);
   renderAll();
 }
@@ -280,10 +276,21 @@ function renderPersons(){
 
     let sum=0;
     DRINKS.forEach(d=>{
-      if(order[d.key]>0){
-        const c=p.drinks[d.key];
+      const totalOrdered = order[d.key]; // Gesamt bestellte Menge dieses Getränks
+
+      // Berechne, wie viel dieses Getränks bereits über ALLE Personen zugewiesen wurde
+      const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[d.key], 0);
+
+      // Berechne, wie viel von diesem Getränk noch unzugewiesen ist
+      const leftUnassigned = totalOrdered - assignedAcrossAllPersons;
+
+      // Die Auswahlmöglichkeit (Getränkereihe mit +/- Buttons) soll erscheinen, wenn:
+      // 1. Das Getränk überhaupt bestellt wurde UND noch unzugewiesen ist (für neue Zuweisungen)
+      // ODER
+      // 2. Die aktuelle Person bereits etwas von diesem Getränk zugewiesen hat (damit sie es reduzieren kann)
+      if ( (totalOrdered > 0 && leftUnassigned > 0) || (p.drinks[d.key] > 0) ) {
+        const c=p.drinks[d.key]; // Anzahl des Getränks, das dieser Person zugewiesen ist
         sum+=c*d.price;
-        // Füge Getränke-Zeilen an die bereits hinzugefügte card.innerHTML an
         card.innerHTML+=`<div class="drink-row">
           <span class="label">${d.name}</span>
           <button onclick="changePersonDrink(${p.id},'${d.key}',-1)">−</button>
@@ -322,8 +329,6 @@ function resetAll(){
 }
 
 // Initialisiere die Anwendung
-// Beachte: Die initiale addPerson() wurde nach oben verschoben,
-// damit 'persons' schon beim ersten renderAll() befüllt ist.
 renderOrder();
 
 // JavaScript zur Vermeidung von Doppeltipp-Zoom
