@@ -10,11 +10,11 @@
       padding: 1rem;
       max-width: 600px;
       margin: auto;
-      font-size: 1.1rem; /* Basis-Schriftgröße für den Körper wurde erhöht */
+      font-size: 1.1rem;
     }
     h1, h2 {
       text-align: center;
-      font-size: 2rem; /* Grössere Überschriften */
+      font-size: 2rem;
     }
     h2 {
         font-size: 1.6rem;
@@ -23,11 +23,11 @@
       display: flex;
       align-items: center;
       margin: 0.6rem 0;
-      gap: 0.5rem; /* Abstand zwischen Elementen wurde reduziert */
+      gap: 0.5rem;
     }
     .item .name, .drink-row .label {
       flex: 1;
-      font-size: 1.2rem; /* Grössere Schrift für Namen/Labels */
+      font-size: 1.2rem;
     }
     button {
       padding: 0.6rem 1.2rem;
@@ -40,9 +40,9 @@
       background: #bdbdbd;
     }
     .count, .person-sum {
-      width: 3rem; /* Breite Zählerfelder wurde reduziert */
+      width: 3rem;
       text-align: center;
-      font-size: 1.2rem; /* Grössere Schrift für Zähler */
+      font-size: 1.2rem;
     }
     .person-card {
       border: 1px solid #ccc;
@@ -59,10 +59,10 @@
     .summary {
       margin-top: 0.8rem;
       font-weight: bold;
-      font-size: 1.3rem; /* Grössere Schrift für Summe */
+      font-size: 1.3rem;
     }
     .unassigned, .done {
-      font-size: 1.2rem; /* Grössere Schrift für Offene/Erledigte Mengen */
+      font-size: 1.2rem;
     }
     .unassigned {
       color: #d32f2f;
@@ -107,13 +107,39 @@
       text-align: left;
     }
     textarea {
-      width: calc(100% - 10px); /* 100% minus padding */
+      width: calc(100% - 10px);
       min-height: 80px;
       padding: 5px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 1rem;
-      box-sizing: border-box; /* Padding in die Breite einbeziehen */
+      box-sizing: border-box;
+    }
+
+    /* Bedienung Name Input */
+    .waitstaff-section {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .waitstaff-section label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .waitstaff-section input[type="text"] {
+      width: calc(100% - 2rem);
+      padding: 0.8rem;
+      font-size: 1.2rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .order-id-display {
+        margin-top: 1rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #555;
     }
 
     /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
@@ -158,6 +184,9 @@
         font-size: 1.2rem;
         padding: 0 0.6rem;
       }
+      .waitstaff-section input[type="text"] {
+        width: calc(100% - 1.5rem);
+      }
     }
   </style>
 </head>
@@ -165,12 +194,18 @@
 
 <h1>Bierzelt Rechner</h1>
 
+<div class="waitstaff-section">
+  <label for="waitstaffName">Name der Bedienung:</label>
+  <input type="text" id="waitstaffName" placeholder="Hier Namen eingeben" oninput="updateWaitstaffName(this.value)">
+  <div class="order-id-display">Bestell-Nr. für diesen Tisch: <span id="currentOrderIdDisplay"></span></div>
+</div>
+
 <h2>1. Bestellung erfassen:</h2>
 <div id="order-section"></div>
 
 <div class="special-requests-container">
   <h2>Sonderwünsche</h2>
-  <textarea id="specialRequests" placeholder="Hier können Sie spezielle Anmerkungen oder Wünsche eingeben..."></textarea>
+  <textarea id="specialRequests" placeholder="Hier können Sie spezielle Anmerkungen oder Wünsche eingeben..." oninput="updateSpecialRequests(this.value)"></textarea>
 </div>
 
 <h2>2. Personen zuordnen:</h2>
@@ -183,6 +218,27 @@
 <button id="reset" onclick="resetAll()">Zurücksetzen</button>
 
 <script>
+// === Firebase Initialisierung (Konzept) ===
+// HIER WÜRDE IHR FIREBASE-KONFIGURATIONSOBJEKT EINGEFÜGT.
+// Beispiel:
+/*
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+*/
+// Fügen Sie das Firebase SDK in Ihrem HTML ein:
+// <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+// ===========================================
+
 const DRINKS=[
   // Alkoholische Biere & Radler
   {key:"mass_bier",   name:"🍺 Maß Bier",           price:8.9},
@@ -197,11 +253,11 @@ const DRINKS=[
   // Wein & Aperol
   {key:"weinschorle", name:"🍷 Weinschorle",         price:4.6},
   {key:"aperol",      name:"🍊 Aperol",             price:6.0},
-  // Softdrinks & Wasser - Spezi nach Limo weiß sortiert
+  // Softdrinks & Wasser
   {key:"apfelschorle",name:"🍎 Apfelschorle",       price:3.2},
   {key:"limo_gelb",   name:"🍋 Limo gelb",          price:3.2},
   {key:"limo_weiss",  name:"⚪️ Limo weiß",          price:3.2},
-  {key:"spezi",       name:"🥤 Spezi",              price:3.2}, // Neu sortiert
+  {key:"spezi",       name:"🥤 Spezi",              price:3.2},
   {key:"wasser",      name:"💧 Wasser",             price:3.2}
 ];
 
@@ -211,16 +267,56 @@ const order={};
 DRINKS.forEach(d=>order[d.key]=0);
 
 let persons=[];
+let currentWaitstaffName = localStorage.getItem('waitstaffName') || ''; // Name aus Local Storage laden
+let currentOrderId = localStorage.getItem('currentOrderId') || generateUniqueId(); // ID aus Local Storage laden oder neu generieren
+let specialRequestsText = localStorage.getItem('specialRequestsText') || ''; // Sonderwünsche laden
+
+// Setzt die initiale Bedienung und Bestell-ID
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('waitstaffName').value = currentWaitstaffName;
+    document.getElementById('currentOrderIdDisplay').textContent = currentOrderId;
+    document.getElementById('specialRequests').value = specialRequestsText;
+    renderOrder(); // Initial render for the order section
+});
+
+
+function generateUniqueId() {
+    // Einfache ID-Generierung, für Firebase später firebase.database().ref().push().key verwenden
+    return 'order_' + Math.random().toString(36).substr(2, 9);
+}
+
+function updateWaitstaffName(name) {
+    currentWaitstaffName = name;
+    localStorage.setItem('waitstaffName', name);
+    // === Firebase Update (Konzept) ===
+    // Wenn Sie Firebase verwenden, würden Sie hier den Waitstaff-Namen für die aktuelle Bestell-ID aktualisieren
+    // db.ref('bierzelt/orders/' + currentOrderId + '/waitstaffName').set(currentWaitstaffName);
+    // ===================================
+}
+
+function updateSpecialRequests(text) {
+    specialRequestsText = text;
+    localStorage.setItem('specialRequestsText', text);
+    // === Firebase Update (Konzept) ===
+    // Wenn Sie Firebase verwenden, würden Sie hier die Sonderwünsche für die aktuelle Bestell-ID aktualisieren
+    // db.ref('bierzelt/orders/' + currentOrderId + '/specialRequests').set(specialRequestsText);
+    // ===================================
+}
+
 
 // Initial eine Person hinzufügen, wenn die Seite geladen wird
-addPerson(); 
+// Dies wird jetzt von DOMContentLoaded gerufen, um sicherzustellen, dass die ID korrekt ist
+if (persons.length === 0) { // Nur hinzufügen, wenn noch keine Personen da sind
+    addPerson(); 
+}
+
 
 function format(eur){return eur.toFixed(2).replace('.',',')+' €'}
 
 function renderOrder(){
   const el=document.getElementById('order-section');
   el.innerHTML='';
-  let totalOrderSum = 0; // Für die Gesamtsumme der Bestellung
+  let totalOrderSum = 0;
 
   DRINKS.forEach(d=>{
     const div=document.createElement('div');
@@ -231,12 +327,15 @@ function renderOrder(){
       <button onclick="changeOrder('${d.key}',1)">+</button>`;
     el.appendChild(div);
 
-    totalOrderSum += order[d.key] * d.price; // Summe aktualisieren
+    totalOrderSum += order[d.key] * d.price;
   });
-  // Gesamtsumme der Bestellung anzeigen
   el.innerHTML+=`<div class="summary"><strong>Gesamtsumme Bestellung: ${format(totalOrderSum)}</strong></div>`;
 
-  renderAll();
+  renderAll(); // Ruft renderPersons und renderRemaining auf
+  // === Firebase Update (Konzept) ===
+  // Hier würden Sie die Gesamtbestellmengen an Firebase senden
+  // db.ref('bierzelt/orders/' + currentOrderId + '/orderQuantities').set(order);
+  // ===================================
 }
 
 function changeOrder(key,delta){
@@ -254,6 +353,11 @@ function adjustAssignmentsAfterOrderChange(key){
     }
     available-=p.drinks[key];
   });
+  // === Firebase Update (Konzept) ===
+  // Wenn Sie Firebase verwenden, würden Sie hier die zugewiesenen Mengen für die betroffene Person aktualisieren
+  // und die Gesamtbestellmenge. Dies ist komplexer, da es sich um eine Person und eine Gesamtbestellung handelt.
+  // Idealerweise würde die gesamte Bestellgruppe (personen & mengen) aktualisiert.
+  // ===================================
 }
 
 function addPerson(){
@@ -261,8 +365,12 @@ function addPerson(){
   const person={id,name:`Person ${id+1}`,drinks:{}};
   DRINKS.forEach(d=>person.drinks[d.key]=0);
   persons.push(person);
-  renderAll(); // Render first to update the DOM with the new person
-  autoAssignRemainingDrinks(id); // Call auto-assign for the newly added person
+  renderAll();
+  autoAssignRemainingDrinks(id);
+  // === Firebase Update (Konzept) ===
+  // Wenn Sie Firebase verwenden, würden Sie hier die neue Person zur Bestellgruppe hinzufügen
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // ===================================
 }
 
 function confirmDeletePerson(personId) {
@@ -278,6 +386,10 @@ function confirmDeletePerson(personId) {
 function deletePerson(personId) {
   persons = persons.filter(p => p.id !== personId);
   renderAll();
+  // === Firebase Update (Konzept) ===
+  // Wenn Sie Firebase verwenden, würden Sie hier die Personenliste aktualisieren
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // ===================================
 }
 
 function autoAssignRemainingDrinks(newPersonId) {
@@ -297,16 +409,18 @@ function autoAssignRemainingDrinks(newPersonId) {
     }
   });
 
-  // Wenn genau ein Getränketyp übrig ist und es noch Mengen davon gibt, weise 1 Einheit der neuen Person zu
   if (countOfDrinksWithRemaining === 1 && remainingDrinkKey !== null && remainingAmount > 0) {
     const newPerson = persons.find(p => p.id === newPersonId);
     if (newPerson) {
-      newPerson.drinks[remainingDrinkKey] += 1; // Weise nur 1 Einheit zu
-      renderAll(); // Neu rendern, um die zugewiesenen Getränke und ausstehenden Mengen zu aktualisieren
+      newPerson.drinks[remainingDrinkKey] += 1;
+      renderAll();
+      // === Firebase Update (Konzept) ===
+      // Aktualisierung der Personendaten nach Auto-Zuweisung
+      // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+      // ===================================
     }
   }
 }
-
 
 function changePersonDrink(personId,key,delta){
   const p=persons.find(x=>x.id===personId);
@@ -314,15 +428,17 @@ function changePersonDrink(personId,key,delta){
 
   const totalOrdered = order[key];
   const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[key], 0);
-  const currentAssignedToThisPerson = p.drinks[key];
 
-  if(delta > 0){ // Trying to add a drink
-    // Only allow adding if there's an unassigned quantity left globally
+  if(delta > 0){
     if (assignedAcrossAllPersons >= totalOrdered) return;
   }
 
   p.drinks[key]=Math.max(0,p.drinks[key]+delta);
   renderAll();
+  // === Firebase Update (Konzept) ===
+  // Aktualisierung der Personendaten nach manueller Zuweisung
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // ===================================
 }
 
 function renderAll(){
@@ -387,13 +503,51 @@ function renderRemaining(){
 function resetAll(){
   DRINKS.forEach(d=>order[d.key]=0);
   persons=[];
-  addPerson();
-  renderOrder();
-  // Sonderwünsche Textfeld leeren beim Reset
+  addPerson(); // Fügt die erste Person wieder hinzu
+  currentOrderId = generateUniqueId(); // Neue Bestell-ID generieren
+  localStorage.setItem('currentOrderId', currentOrderId); // Im Local Storage speichern
+  document.getElementById('currentOrderIdDisplay').textContent = currentOrderId; // Anzeige aktualisieren
+  
+  specialRequestsText = ''; // Sonderwünsche leeren
+  localStorage.setItem('specialRequestsText', '');
   document.getElementById('specialRequests').value = '';
+
+  renderOrder(); // Gesamte Ansicht neu rendern
+  // === Firebase Update (Konzept) ===
+  // Hier würden Sie die alte Bestellgruppe in Firebase als "abgeschlossen" markieren
+  // oder löschen und eine neue unter der neuen currentOrderId erstellen.
+  // db.ref('bierzelt/orders/' + oldOrderId).remove(); // Oder Status setzen
+  // db.ref('bierzelt/orders/' + currentOrderId).set({
+  //   waitstaffName: currentWaitstaffName,
+  //   orderQuantities: order,
+  //   persons: persons,
+  //   specialRequests: specialRequestsText,
+  //   status: 'active',
+  //   timestamp: new Date().toISOString()
+  // });
+  // ===================================
 }
 
-renderOrder();
+// Initialer Render-Aufruf beim Laden der Seite
+document.addEventListener('DOMContentLoaded', () => {
+    // Werte aus localStorage wiederherstellen
+    currentWaitstaffName = localStorage.getItem('waitstaffName') || '';
+    currentOrderId = localStorage.getItem('currentOrderId') || generateUniqueId();
+    specialRequestsText = localStorage.getItem('specialRequestsText') || '';
+
+    // Felder setzen
+    document.getElementById('waitstaffName').value = currentWaitstaffName;
+    document.getElementById('currentOrderIdDisplay').textContent = currentOrderId;
+    document.getElementById('specialRequests').value = specialRequestsText;
+
+    // Nur initial eine Person hinzufügen, wenn noch keine Personen geladen wurden
+    // (z.B. nach einem Hard-Refresh, nicht nach einem Soft-Refresh, wo 'persons' schon da sein könnte)
+    if (persons.length === 0) {
+        addPerson();
+    }
+    renderOrder(); // Ruft auch renderAll auf
+});
+
 
 document.addEventListener('touchend', function (event) {
     var now = new Date().getTime();
