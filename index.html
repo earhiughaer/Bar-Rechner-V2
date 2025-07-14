@@ -10,25 +10,28 @@
       padding: 1rem;
       max-width: 600px;
       margin: auto;
-      font-size: 1rem; /* Basis-Schriftgröße für den Körper */
+      font-size: 1.1rem; /* Basis-Schriftgröße für den Körper wurde erhöht */
     }
     h1, h2 {
       text-align: center;
-      font-size: 1.8rem; /* Grössere Überschriften */
+      font-size: 2rem; /* Grössere Überschriften */
+    }
+    h2 {
+        font-size: 1.6rem;
     }
     .item, .drink-row {
       display: flex;
       align-items: center;
-      margin: 0.6rem 0; /* Mehr vertikaler Abstand */
-      gap: 0.8rem; /* Mehr Abstand zwischen Elementen */
+      margin: 0.6rem 0;
+      gap: 0.5rem; /* Abstand zwischen Elementen wurde reduziert */
     }
     .item .name, .drink-row .label {
       flex: 1;
-      font-size: 1.1rem; /* Grössere Schrift für Namen/Labels */
+      font-size: 1.2rem; /* Grössere Schrift für Namen/Labels */
     }
     button {
-      padding: 0.6rem 1.2rem; /* Grösseres Padding für Buttons */
-      font-size: 1.1rem; /* Grössere Schrift in Buttons */
+      padding: 0.6rem 1.2rem;
+      font-size: 1.1rem;
       border: none;
       border-radius: 6px;
       background: #e0e0e0;
@@ -37,34 +40,35 @@
       background: #bdbdbd;
     }
     .count, .person-sum {
-      width: 4rem; /* Breitere Zählerfelder */
+      width: 3rem; /* Breite Zählerfelder wurde reduziert */
       text-align: center;
-      font-size: 1.1rem; /* Grössere Schrift für Zähler */
+      font-size: 1.2rem; /* Grössere Schrift für Zähler */
     }
     .person-card {
       border: 1px solid #ccc;
-      padding: 1rem; /* Mehr Padding für Karten */
-      margin-top: 1.2rem; /* Mehr Abstand über Karten */
+      padding: 1rem;
+      margin-top: 1.2rem;
       border-radius: 8px;
     }
     .summary {
       margin-top: 0.8rem;
       font-weight: bold;
-      font-size: 1.2rem; /* Grössere Schrift für Summe */
+      font-size: 1.3rem; /* Grössere Schrift für Summe */
+    }
+    .unassigned, .done {
+      font-size: 1.2rem; /* Grössere Schrift für Offene/Erledigte Mengen */
     }
     .unassigned {
       color: #d32f2f;
-      font-size: 1.1rem; /* Grössere Schrift für Offene Mengen */
     }
     .done {
       color: #2e7d32;
-      font-size: 1.1rem; /* Grössere Schrift für Erledigte Mengen */
     }
     #reset {
       width: 100%;
-      margin-top: 1.5rem; /* Mehr Abstand */
-      padding: 1rem; /* Grösseres Padding */
-      font-size: 1.2rem; /* Grössere Schrift für Reset-Button */
+      margin-top: 1.5rem;
+      padding: 1rem;
+      font-size: 1.2rem;
       background: #f44336;
       color: #fff;
     }
@@ -75,24 +79,32 @@
     /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
     @media (max-width: 480px) {
       body {
-        font-size: 1.1rem; /* Noch etwas größere Basis-Schriftgröße auf sehr kleinen Bildschirmen */
+        font-size: 1.2rem; /* Noch größere Basis-Schriftgröße auf sehr kleinen Bildschirmen */
       }
       h1 {
-        font-size: 2rem;
+        font-size: 2.2rem;
       }
       h2 {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
       }
-      .item .name, .drink-row .label, button, .count, .unassigned, .done {
-        font-size: 1.2rem; /* Größere Schrift für alle interaktiven Elemente */
+      .item, .drink-row {
+        gap: 0.4rem; /* Abstand zwischen Elementen auf Mobilgeräten noch weiter reduziert */
+      }
+      .item .name, .drink-row .label {
+        font-size: 1.3rem; /* Größere Schrift für Namen/Labels auf Mobilgeräten */
       }
       button {
-        padding: 0.7rem 1.4rem; /* Noch mehr Padding für Buttons */
+        padding: 0.7rem 1.4rem;
+        font-size: 1.2rem; /* Grössere Schrift in Buttons auf Mobilgeräten */
       }
       .count {
-        width: 4.5rem; /* Noch breitere Zählerfelder */
+        width: 3.5rem; /* Breite Zählerfelder auf Mobilgeräten angepasst */
+        font-size: 1.3rem; /* Grössere Schrift für Zähler auf Mobilgeräten */
       }
       .summary {
+        font-size: 1.4rem;
+      }
+      .unassigned, .done {
         font-size: 1.3rem;
       }
       #reset {
