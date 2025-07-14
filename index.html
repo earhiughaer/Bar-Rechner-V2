@@ -79,6 +79,7 @@
   </style>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
 </head>
 <body>
   <h1>Bierzelt Rechner</h1>
@@ -114,134 +115,142 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    const DRINKS = [
-      { key: "mass_bier", name: "🍺 Maß Bier", price: 8.9 },
-      { key: "halbe_bier", name: "🍻 Halbe Bier", price: 4.8 },
-      { key: "mass_radler", name: "🍺🍋 Maß Radler", price: 8.9 },
-      { key: "halbe_radler", name: "🍻🍋 Halbe Radler", price: 4.8 },
-      { key: "weinschorle", name: "🍷 Weinschorle", price: 4.6 },
-      { key: "aperol", name: "🍊 Aperol", price: 6.0 },
-      { key: "spezi", name: "🥤 Spezi", price: 3.2 },
-      { key: "wasser", name: "💧 Wasser", price: 3.2 }
-    ];
-    const order = {};
-    DRINKS.forEach(d => order[d.key] = 0);
-    let persons = [];
+    firebase.auth().signInAnonymously().then(() => {
+      const db = firebase.database();
 
-    function format(eur) {
-      return eur.toFixed(2).replace('.', ',') + ' €';
-    }
+      const DRINKS = [
+        { key: "mass_bier", name: "🍺 Maß Bier", price: 8.9 },
+        { key: "halbe_bier", name: "🍻 Halbe Bier", price: 4.8 },
+        { key: "mass_radler", name: "🍺🍋 Maß Radler", price: 8.9 },
+        { key: "halbe_radler", name: "🍻🍋 Halbe Radler", price: 4.8 },
+        { key: "weinschorle", name: "🍷 Weinschorle", price: 4.6 },
+        { key: "aperol", name: "🍊 Aperol", price: 6.0 },
+        { key: "spezi", name: "🥤 Spezi", price: 3.2 },
+        { key: "wasser", name: "💧 Wasser", price: 3.2 }
+      ];
 
-    function renderOrder() {
-      const el = document.getElementById('order-section');
-      el.innerHTML = '';
-      let total = 0;
-
-      DRINKS.forEach(d => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <span class="name">${d.name} (${format(d.price)})</span>
-          <button onclick="changeOrder('${d.key}', -1)">−</button>
-          <span class="count">${order[d.key]}</span>
-          <button onclick="changeOrder('${d.key}', 1)">+</button>
-        `;
-        el.appendChild(div);
-        total += order[d.key] * d.price;
-      });
-
-      const totalDiv = document.createElement('div');
-      totalDiv.className = 'summary';
-      totalDiv.innerText = 'Gesamtsumme Bestellung: ' + format(total);
-      el.appendChild(totalDiv);
-    }
-
-    function changeOrder(key, delta) {
-      order[key] = Math.max(0, order[key] + delta);
-      renderOrder();
-    }
-
-    function addPerson() {
-      const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
-      const person = { id, drinks: {} };
-      DRINKS.forEach(d => person.drinks[d.key] = 0);
-      persons.push(person);
-      renderPersons();
-    }
-
-    function changePersonDrink(personId, key, delta) {
-      const p = persons.find(p => p.id === personId);
-      if (!p) return;
-      p.drinks[key] = Math.max(0, p.drinks[key] + delta);
-      renderPersons();
-    }
-
-    function renderPersons() {
-      const container = document.getElementById('persons');
-      container.innerHTML = '';
-      persons.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'person-card';
-        card.innerHTML = `<strong>Person ${p.id + 1}</strong>`;
-        let sum = 0;
-        DRINKS.forEach(d => {
-          const count = p.drinks[d.key];
-          sum += count * d.price;
-          if (count > 0 || order[d.key] > 0) {
-            card.innerHTML += `
-              <div class="drink-row">
-                <span class="label">${d.name}</span>
-                <button onclick="changePersonDrink(${p.id}, '${d.key}', -1)">−</button>
-                <span class="count">${count}</span>
-                <button onclick="changePersonDrink(${p.id}, '${d.key}', 1)">+</button>
-              </div>
-            `;
-          }
-        });
-        card.innerHTML += `<div class="summary">Summe: ${format(sum)}</div>`;
-        container.appendChild(card);
-      });
-    }
-
-    function resetAll() {
+      const order = {};
       DRINKS.forEach(d => order[d.key] = 0);
-      persons = [];
-      renderOrder();
-      renderPersons();
-      document.getElementById('specialRequests').value = '';
-    }
+      let persons = [];
 
-    document.getElementById('sendOrderBtn').addEventListener('click', () => {
-      const nameField = document.getElementById('waitstaffName');
-      const waitstaffName = nameField.value.trim();
-      if (!waitstaffName) {
-        alert("Bitte Namen der Bedienung eingeben.");
-        return;
+      function format(eur) {
+        return eur.toFixed(2).replace('.', ',') + ' €';
       }
-      localStorage.setItem('waitstaffName', waitstaffName);
 
-      const orderData = {
-        waitstaffName,
-        orderQuantities: { ...order },
-        specialRequests: document.getElementById('specialRequests').value.trim(),
-        timestamp: Date.now()
-      };
-      const ref = db.ref('bierzelt/orders');
-      ref.push(orderData).then(() => {
-        alert("Bestellung gesendet!");
+      function renderOrder() {
+        const el = document.getElementById('order-section');
+        el.innerHTML = '';
+        let total = 0;
+
+        DRINKS.forEach(d => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <span class="name">${d.name} (${format(d.price)})</span>
+            <button onclick="changeOrder('${d.key}', -1)">−</button>
+            <span class="count">${order[d.key]}</span>
+            <button onclick="changeOrder('${d.key}', 1)">+</button>
+          `;
+          el.appendChild(div);
+          total += order[d.key] * d.price;
+        });
+
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'summary';
+        totalDiv.innerText = 'Gesamtsumme Bestellung: ' + format(total);
+        el.appendChild(totalDiv);
+      }
+
+      function changeOrder(key, delta) {
+        order[key] = Math.max(0, order[key] + delta);
+        renderOrder();
+      }
+
+      function addPerson() {
+        const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
+        const person = { id, drinks: {} };
+        DRINKS.forEach(d => person.drinks[d.key] = 0);
+        persons.push(person);
+        renderPersons();
+      }
+
+      function changePersonDrink(personId, key, delta) {
+        const p = persons.find(p => p.id === personId);
+        if (!p) return;
+        p.drinks[key] = Math.max(0, p.drinks[key] + delta);
+        renderPersons();
+      }
+
+      function renderPersons() {
+        const container = document.getElementById('persons');
+        container.innerHTML = '';
+        persons.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'person-card';
+          card.innerHTML = `<strong>Person ${p.id + 1}</strong>`;
+          let sum = 0;
+          DRINKS.forEach(d => {
+            const count = p.drinks[d.key];
+            sum += count * d.price;
+            if (count > 0 || order[d.key] > 0) {
+              card.innerHTML += `
+                <div class="drink-row">
+                  <span class="label">${d.name}</span>
+                  <button onclick="changePersonDrink(${p.id}, '${d.key}', -1)">−</button>
+                  <span class="count">${count}</span>
+                  <button onclick="changePersonDrink(${p.id}, '${d.key}', 1)">+</button>
+                </div>
+              `;
+            }
+          });
+          card.innerHTML += `<div class="summary">Summe: ${format(sum)}</div>`;
+          container.appendChild(card);
+        });
+      }
+
+      function resetAll() {
+        DRINKS.forEach(d => order[d.key] = 0);
+        persons = [];
+        renderOrder();
+        renderPersons();
+        document.getElementById('specialRequests').value = '';
+      }
+
+      document.getElementById('sendOrderBtn').addEventListener('click', () => {
+        const nameField = document.getElementById('waitstaffName');
+        const waitstaffName = nameField.value.trim();
+        if (!waitstaffName) {
+          alert("Bitte Namen der Bedienung eingeben.");
+          return;
+        }
+        localStorage.setItem('waitstaffName', waitstaffName);
+
+        const orderData = {
+          waitstaffName,
+          orderQuantities: { ...order },
+          specialRequests: document.getElementById('specialRequests').value.trim(),
+          timestamp: Date.now()
+        };
+        const ref = db.ref('bierzelt/orders');
+        ref.push(orderData).then(() => {
+          alert("Bestellung gesendet!");
+        });
       });
-    });
 
-    // Lade gespeicherten Namen
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedName = localStorage.getItem('waitstaffName');
-      if (savedName) {
-        document.getElementById('waitstaffName').value = savedName;
-      }
-      renderOrder();
-      renderPersons();
+      window.resetAll = resetAll;
+      window.addPerson = addPerson;
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedName = localStorage.getItem('waitstaffName');
+        if (savedName) {
+          document.getElementById('waitstaffName').value = savedName;
+        }
+        renderOrder();
+        renderPersons();
+      });
+    }).catch((error) => {
+      console.error("Fehler bei anonymer Anmeldung:", error.code, error.message);
     });
   </script>
 </body>
