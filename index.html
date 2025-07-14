@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Bierzelt Rechner</title>
   <style>
     body {
       font-family: sans-serif;
       padding: 1rem;
-      max-width: 700px;
+      max-width: 600px;
       margin: auto;
       font-size: 1.1rem;
     }
     h1, h2 {
       text-align: center;
+      font-size: 2rem;
     }
+    h2 { font-size: 1.6rem; }
     .item, .drink-row {
       display: flex;
       align-items: center;
@@ -23,307 +25,285 @@
     }
     .item .name, .drink-row .label {
       flex: 1;
+      font-size: 1.2rem;
     }
     button {
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1.1rem;
       border: none;
       border-radius: 6px;
       background: #e0e0e0;
-      cursor: pointer;
     }
-    button:active {
-      background: #bdbdbd;
-    }
-    .count {
+    button:active { background: #bdbdbd; }
+    .count, .person-sum {
       width: 3rem;
       text-align: center;
+      font-size: 1.2rem;
     }
     .person-card {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin-top: 1rem;
+      margin-top: 1.2rem;
       border-radius: 8px;
-    }
-    .summary {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-    .unassigned {
-      color: #d32f2f;
-    }
-    .done {
-      color: #2e7d32;
-    }
-    #reset {
-      width: 100%;
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #f44336;
-      color: white;
-    }
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      font-size: 1rem;
-      margin-top: 0.5rem;
-    }
-    .send-btn {
-      display: block;
-      margin: 1.5rem auto 0;
-      background: #4caf50;
-      color: white;
-      padding: 0.8rem 2rem;
-      font-size: 1.2rem;
     }
     .person-title-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
     }
+    .summary {
+      margin-top: 0.8rem;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+    .unassigned, .done {
+      font-size: 1.2rem;
+    }
+    .unassigned { color: #d32f2f; }
+    .done { color: #2e7d32; }
+    #reset {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      font-size: 1.2rem;
+      background: #f44336;
+      color: #fff;
+    }
+    #reset:active { background: #d32f2f; }
     .delete-person-btn {
       background: none;
-      color: #888;
-      font-size: 1.1rem;
       border: none;
+      color: #757575;
+      font-size: 1.1rem;
+      padding: 0 0.5rem;
       cursor: pointer;
+      font-weight: normal;
+    }
+    .delete-person-btn:active { color: #424242; }
+    .special-requests-container {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .special-requests-container h2 {
+      margin-top: 0;
+      text-align: left;
+      font-size: 1.2rem;
+    }
+    textarea {
+      width: calc(100% - 10px);
+      min-height: 80px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .green-button {
+      background: #4caf50;
+      color: white;
+      width: 100%;
+      margin-top: 1rem;
+      padding: 1rem;
+      font-size: 1.2rem;
+      display: block;
+      text-align: center;
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <h1>Bierzelt Rechner</h1>
 
-  <!-- Bedienungsname -->
-  <div id="waitstaffNamePrompt">
-    <label for="waitstaffNameInput"><strong>Dein Name:</strong></label>
-    <input type="text" id="waitstaffNameInput" placeholder="z. B. Lisa" />
-    <button onclick="setWaitstaffName()">Weiter</button>
+  <h2>1. Bestellung erfassen:</h2>
+  <div id="order-section"></div>
+
+  <div class="special-requests-container">
+    <h2>Sonderwünsche</h2>
+    <textarea id="specialRequests" placeholder="z. B. Saure Radler-Halbe"></textarea>
   </div>
 
-  <div id="app" style="display:none">
-    <h2>1. Bestellung erfassen</h2>
-    <div id="order-section"></div>
+  <button class="green-button" onclick="sendOrderToFirebase()">📤 Bestellung senden</button>
 
-    <div class="special-requests-container">
-      <h2>Sonderwünsche</h2>
-      <textarea id="specialRequests" placeholder="z. B. Saure Radler-Halbe"></textarea>
-    </div>
-    <button class="send-btn" onclick="sendOrder()">Bestellung senden</button>
+  <h2>2. Personen zuordnen:</h2>
+  <div id="persons"></div>
+  <button id="addPersonBtn" onclick="addPerson()">➕ Person&nbsp;hinzufügen</button>
 
+  <h2>Noch&nbsp;ausstehend</h2>
+  <div id="remaining"></div>
 
-    <h2>2. Personen zuordnen</h2>
-    <div id="persons"></div>
-    <button onclick="addPerson()">➕ Person hinzufügen</button>
+  <button id="reset" onclick="resetAll()">Zurücksetzen</button>
 
-    <h2>Noch ausstehend</h2>
-    <div id="remaining"></div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
+    authDomain: "bierzelt-rechner.firebaseapp.com",
+    databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bierzelt-rechner",
+    storageBucket: "bierzelt-rechner.appspot.com",
+    messagingSenderId: "322991437255",
+    appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
+  };
 
-    <div class="summary" id="orderTotalSummary"></div>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const ordersRef = db.ref("bierzelt/orders");
 
-    <button id="reset" onclick="resetAll()">Zurücksetzen</button>
-  </div>
+  const DRINKS = [
+    {key:"mass_bier", name:"🍺 Maß Bier", price:8.9},
+    {key:"halbe_bier", name:"🍻 Halbe Bier", price:4.8},
+    {key:"mass_radler", name:"🍺🍋 Maß Radler", price:8.9},
+    {key:"halbe_radler", name:"🍻🍋 Halbe Radler", price:4.8},
+    {key:"mass_bier_alkfrei", name:"🍺 Maß Bier Alkoholfrei", price:8.9},
+    {key:"halbe_bier_alkfrei", name:"🍻 Halbe Bier Alkoholfrei", price:4.8},
+    {key:"mass_radler_alkfrei", name:"🍺🍋 Maß Radler Alkoholfrei", price:8.9},
+    {key:"halbe_radler_alkfrei", name:"🍻🍋 Halbe Radler Alkoholfrei", price:4.8},
+    {key:"weinschorle", name:"🍷 Weinschorle", price:4.6},
+    {key:"aperol", name:"🍊 Aperol", price:6.0},
+    {key:"apfelschorle", name:"🍎 Apfelschorle", price:3.2},
+    {key:"limo_gelb", name:"🍋 Limo gelb", price:3.2},
+    {key:"limo_weiss", name:"⚪️ Limo weiß", price:3.2},
+    {key:"spezi", name:"🥤 Spezi", price:3.2},
+    {key:"wasser", name:"💧 Wasser", price:3.2}
+  ];
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+  const drinkMap = Object.fromEntries(DRINKS.map(d => [d.key, d]));
+  const order = {}; DRINKS.forEach(d => order[d.key] = 0);
+  let persons = [];
+  addPerson();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
-      authDomain: "bierzelt-rechner.firebaseapp.com",
-      databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "bierzelt-rechner",
-      storageBucket: "bierzelt-rechner.appspot.com",
-      messagingSenderId: "322991437255",
-      appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  function format(eur) { return eur.toFixed(2).replace('.', ',') + ' €'; }
 
-    const DRINKS = [
-      { key: "mass_bier", name: "🍺 Maß Bier", price: 8.9 },
-      { key: "halbe_bier", name: "🍻 Halbe Bier", price: 4.8 },
-      { key: "mass_radler", name: "🍺🍋 Maß Radler", price: 8.9 },
-      { key: "halbe_radler", name: "🍻🍋 Halbe Radler", price: 4.8 },
-      { key: "mass_bier_alkfrei", name: "🍺 Maß Bier Alkoholfrei", price: 8.9 },
-      { key: "halbe_bier_alkfrei", name: "🍻 Halbe Bier Alkoholfrei", price: 4.8 },
-      { key: "mass_radler_alkfrei", name: "🍺🍋 Maß Radler Alkoholfrei", price: 8.9 },
-      { key: "halbe_radler_alkfrei", name: "🍻🍋 Halbe Radler Alkoholfrei", price: 4.8 },
-      { key: "weinschorle", name: "🍷 Weinschorle", price: 4.6 },
-      { key: "aperol", name: "🍊 Aperol", price: 6.0 },
-      { key: "apfelschorle", name: "🍎 Apfelschorle", price: 3.2 },
-      { key: "limo_gelb", name: "🍋 Limo gelb", price: 3.2 },
-      { key: "limo_weiss", name: "⚪️ Limo weiß", price: 3.2 },
-      { key: "spezi", name: "🥤 Spezi", price: 3.2 },
-      { key: "wasser", name: "💧 Wasser", price: 3.2 },
-    ];
+  function renderOrder() {
+    const el = document.getElementById('order-section');
+    el.innerHTML = '';
+    let totalSum = 0;
 
-    const drinkMap = Object.fromEntries(DRINKS.map(d => [d.key, d]));
-    let waitstaffName = localStorage.getItem("waitstaffName");
-    const order = {};
-    DRINKS.forEach(d => order[d.key] = 0);
-    let persons = [];
+    DRINKS.forEach(d => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span class="name">${d.name} (${format(d.price)})</span>
+        <button onclick="changeOrder('${d.key}', -1)">−</button>
+        <span class="count" id="order-${d.key}">${order[d.key]}</span>
+        <button onclick="changeOrder('${d.key}', 1)">+</button>`;
+      el.appendChild(div);
+      totalSum += order[d.key] * d.price;
+    });
 
-    function setWaitstaffName() {
-      const input = document.getElementById("waitstaffNameInput");
-      const name = input.value.trim();
-      if (!name) return alert("Bitte Namen eingeben.");
-      waitstaffName = name;
-      localStorage.setItem("waitstaffName", name);
-      document.getElementById("waitstaffNamePrompt").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      addPerson();
-      renderAll();
-    }
+    el.innerHTML += `<div class="summary"><strong>Gesamtsumme Bestellung: ${format(totalSum)}</strong></div>`;
+    renderAll();
+  }
 
-    function format(eur) {
-      return eur.toFixed(2).replace(".", ",") + " €";
-    }
+  function changeOrder(key, delta) {
+    order[key] = Math.max(0, order[key] + delta);
+    document.getElementById('order-' + key).textContent = order[key];
+    adjustAssignmentsAfterOrderChange(key);
+    renderAll();
+  }
 
-    function changeOrder(key, delta) {
-      order[key] = Math.max(0, order[key] + delta);
-      adjustAssignmentsAfterOrderChange(key);
-      renderAll();
-    }
+  function adjustAssignmentsAfterOrderChange(key) {
+    let available = order[key];
+    persons.forEach(p => {
+      if (p.drinks[key] > available) {
+        p.drinks[key] = available;
+      }
+      available -= p.drinks[key];
+    });
+  }
 
-    function adjustAssignmentsAfterOrderChange(key) {
-      let available = order[key];
-      persons.forEach(p => {
-        if (p.drinks[key] > available) {
-          p.drinks[key] = available;
-        }
-        available -= p.drinks[key];
-      });
-    }
+  function addPerson() {
+    const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
+    const person = { id, name: `Person ${id+1}`, drinks: {} };
+    DRINKS.forEach(d => person.drinks[d.key] = 0);
+    persons.push(person);
+    renderAll();
+  }
 
-    function renderOrder() {
-      const el = document.getElementById("order-section");
-      el.innerHTML = "";
-      let total = 0;
+  function changePersonDrink(pid, key, delta) {
+    const p = persons.find(x => x.id === pid);
+    if (!p) return;
+    const total = order[key];
+    const assigned = persons.reduce((s, p) => s + p.drinks[key], 0);
+    if (delta > 0 && assigned >= total) return;
+    p.drinks[key] = Math.max(0, p.drinks[key] + delta);
+    renderAll();
+  }
+
+  function renderAll() {
+    renderPersons();
+    renderRemaining();
+  }
+
+  function renderPersons() {
+    const container = document.getElementById('persons');
+    container.innerHTML = '';
+    persons.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'person-card';
+      card.innerHTML = `<div class="person-title-row"><strong>${p.name}</strong></div>`;
+      let sum = 0;
       DRINKS.forEach(d => {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <span class="name">${d.name} (${format(d.price)})</span>
-          <button onclick="changeOrder('${d.key}', -1)">−</button>
-          <span class="count" id="count-${d.key}">${order[d.key]}</span>
-          <button onclick="changeOrder('${d.key}', 1)">+</button>`;
-        el.appendChild(div);
-        total += order[d.key] * d.price;
-      });
-      document.getElementById("orderTotalSummary").textContent = `Gesamtsumme Bestellung: ${format(total)}`;
-    }
-
-    function renderPersons() {
-      const container = document.getElementById("persons");
-      container.innerHTML = "";
-      persons.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "person-card";
-        let sum = 0;
-
-        card.innerHTML = `
-          <div class="person-title-row">
-            <strong>${p.name}</strong>
-            ${p.id !== 0 ? `<button class="delete-person-btn" onclick="deletePerson(${p.id})">✖</button>` : ""}
-          </div>
-        `;
-
-        DRINKS.forEach(d => {
+        const total = order[d.key];
+        const assigned = persons.reduce((s, per) => s + per.drinks[d.key], 0);
+        const left = total - assigned;
+        if ((total > 0 && left > 0) || (p.drinks[d.key] > 0)) {
           const c = p.drinks[d.key];
-          if (order[d.key] > 0 || c > 0) {
-            card.innerHTML += `
-              <div class="drink-row">
-                <span class="label">${d.name}</span>
-                <button onclick="changePersonDrink(${p.id}, '${d.key}', -1)">−</button>
-                <span class="count">${c}</span>
-                <button onclick="changePersonDrink(${p.id}, '${d.key}', 1)">+</button>
-              </div>`;
-            sum += c * d.price;
-          }
-        });
-        card.innerHTML += `<div class="summary">Summe: ${format(sum)}</div>`;
-        container.appendChild(card);
-      });
-    }
-
-    function renderRemaining() {
-      const div = document.getElementById("remaining");
-      div.innerHTML = "";
-      DRINKS.forEach(d => {
-        const assigned = persons.reduce((s, p) => s + p.drinks[d.key], 0);
-        const left = order[d.key] - assigned;
-        if (order[d.key] > 0) {
-          const cls = left === 0 ? "done" : "unassigned";
-          div.innerHTML += `<div class="${cls}">${d.name}: ${left} ${left === 0 ? "✔️" : "ausstehend"}</div>`;
+          sum += c * d.price;
+          card.innerHTML += `<div class="drink-row">
+            <span class="label">${d.name}</span>
+            <button onclick="changePersonDrink(${p.id}, '${d.key}', -1)">−</button>
+            <span class="count">${c}</span>
+            <button onclick="changePersonDrink(${p.id}, '${d.key}', 1)">+</button>
+          </div>`;
         }
       });
+      card.innerHTML += `<div class="summary">Summe: ${format(sum)}</div>`;
+      container.appendChild(card);
+    });
+  }
+
+  function renderRemaining() {
+    const div = document.getElementById('remaining');
+    div.innerHTML = '';
+    DRINKS.forEach(d => {
+      const total = order[d.key];
+      if (total > 0) {
+        const assigned = persons.reduce((s, p) => s + p.drinks[d.key], 0);
+        const left = total - assigned;
+        const cls = left === 0 ? 'done' : 'unassigned';
+        div.innerHTML += `<div class="${cls}">${d.name}: ${left} ${left === 0 ? '✔️' : 'ausstehend'}</div>`;
+      }
+    });
+  }
+
+  function resetAll() {
+    DRINKS.forEach(d => order[d.key] = 0);
+    persons = [];
+    addPerson();
+    renderOrder();
+    document.getElementById('specialRequests').value = '';
+  }
+
+  function sendOrderToFirebase() {
+    const orderQuantities = Object.fromEntries(Object.entries(order).filter(([_, v]) => v > 0));
+    if (Object.keys(orderQuantities).length === 0) {
+      alert("Keine Getränke ausgewählt.");
+      return;
     }
+    const data = {
+      orderQuantities,
+      specialRequests: document.getElementById('specialRequests').value.trim(),
+      waitstaffName: "Bedienung " + new Date().toLocaleTimeString('de-DE')
+    };
+    ordersRef.push(data).then(() => {
+      alert("Bestellung gesendet!");
+    });
+  }
 
-    function renderAll() {
-      renderOrder();
-      renderPersons();
-      renderRemaining();
-    }
-
-    function addPerson() {
-      const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
-      const person = { id, name: `Person ${id + 1}`, drinks: {} };
-      DRINKS.forEach(d => person.drinks[d.key] = 0);
-      persons.push(person);
-      renderAll();
-    }
-
-    function deletePerson(id) {
-      persons = persons.filter(p => p.id !== id);
-      renderAll();
-    }
-
-    function changePersonDrink(pid, key, delta) {
-      const p = persons.find(x => x.id === pid);
-      const assigned = persons.reduce((s, p) => s + p.drinks[key], 0);
-      if (delta > 0 && assigned >= order[key]) return;
-      p.drinks[key] = Math.max(0, p.drinks[key] + delta);
-      renderAll();
-    }
-
-    function sendOrder() {
-      const totalDrinks = Object.values(order).reduce((s, v) => s + v, 0);
-      if (totalDrinks === 0) return alert("Bitte Getränke auswählen.");
-
-      const specialRequests = document.getElementById("specialRequests").value.trim();
-      const payload = {
-        waitstaffName,
-        orderQuantities: { ...order },
-        persons,
-        specialRequests,
-        timestamp: Date.now()
-      };
-
-      db.ref("bierzelt/orders").push(payload).then(() => {
-        alert("Bestellung gesendet!");
-        resetAll();
-      }).catch(err => {
-        alert("Fehler: " + err.message);
-      });
-    }
-
-    function resetAll() {
-      DRINKS.forEach(d => order[d.key] = 0);
-      persons = [];
-      addPerson();
-      document.getElementById("specialRequests").value = "";
-      renderAll();
-    }
-
-    // Autostart, wenn Name vorhanden
-    if (waitstaffName) {
-      document.getElementById("waitstaffNamePrompt").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      addPerson();
-      renderAll();
-    }
-  </script>
+  renderOrder();
+</script>
 </body>
 </html>
