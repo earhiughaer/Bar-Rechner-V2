@@ -189,8 +189,6 @@
       }
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -220,20 +218,30 @@
 <button id="reset" onclick="resetAll()">Zurücksetzen</button>
 
 <script>
-// === Firebase Initialisierung ===
-// Fügen Sie HIER IHR FIREBASE-KONFIGURATIONSOBJEKT EIN
-const firebaseConfig = {
-  apiKey: "IHR_API_KEY",
-  authDomain: "IHR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://IHR_PROJECT_ID-default-rtdb.REGION.firebasedatabase.app", // Beispiel: https://mein-projekt-id-default-rtdb.europe-west1.firebasedatabase.app
-  projectId: "IHR_PROJECT_ID",
-  storageBucket: "IHR_PROJECT_ID.appspot.com",
-  messagingSenderId: "IHR_MESSAGING_SENDER_ID",
-  appId: "IHR_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-// ===================================
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
+    authDomain: "bierzelt-rechner.firebaseapp.com",
+    databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bierzelt-rechner",
+    storageBucket: "bierzelt-rechner.firebasestorage.app",
+    messagingSenderId: "322991437255",
+    appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+// Fügen Sie das Firebase SDK in Ihrem HTML ein:
+// <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+// ===========================================
 
 const DRINKS=[
   // Alkoholische Biere & Radler
@@ -285,7 +293,8 @@ function updateWaitstaffName(name) {
     currentWaitstaffName = name;
     localStorage.setItem('waitstaffName', name);
     // === Firebase Update (Konzept) ===
-    db.ref('bierzelt/orders/' + currentOrderId + '/waitstaffName').set(currentWaitstaffName);
+    // Wenn Sie Firebase verwenden, würden Sie hier den Waitstaff-Namen für die aktuelle Bestell-ID aktualisieren
+    // db.ref('bierzelt/orders/' + currentOrderId + '/waitstaffName').set(currentWaitstaffName);
     // ===================================
 }
 
@@ -293,7 +302,8 @@ function updateSpecialRequests(text) {
     specialRequestsText = text;
     localStorage.setItem('specialRequestsText', text);
     // === Firebase Update (Konzept) ===
-    db.ref('bierzelt/orders/' + currentOrderId + '/specialRequests').set(specialRequestsText);
+    // Wenn Sie Firebase verwenden, würden Sie hier die Sonderwünsche für die aktuelle Bestell-ID aktualisieren
+    // db.ref('bierzelt/orders/' + currentOrderId + '/specialRequests').set(specialRequestsText);
     // ===================================
 }
 
@@ -327,7 +337,8 @@ function renderOrder(){
 
   renderAll(); // Ruft renderPersons und renderRemaining auf
   // === Firebase Update (Konzept) ===
-  db.ref('bierzelt/orders/' + currentOrderId + '/orderQuantities').set(order);
+  // Hier würden Sie die Gesamtbestellmengen an Firebase senden
+  // db.ref('bierzelt/orders/' + currentOrderId + '/orderQuantities').set(order);
   // ===================================
 }
 
@@ -347,8 +358,9 @@ function adjustAssignmentsAfterOrderChange(key){
     available-=p.drinks[key];
   });
   // === Firebase Update (Konzept) ===
-  db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
-  db.ref('bierzelt/orders/' + currentOrderId + '/orderQuantities').set(order);
+  // Wenn Sie Firebase verwenden, würden Sie hier die zugewiesenen Mengen für die betroffene Person aktualisieren
+  // und die Gesamtbestellmenge. Dies ist komplexer, da es sich um eine Person und eine Gesamtbestellung handelt.
+  // Idealerweise würde die gesamte Bestellgruppe (personen & mengen) aktualisiert.
   // ===================================
 }
 
@@ -360,7 +372,8 @@ function addPerson(){
   renderAll();
   autoAssignRemainingDrinks(id);
   // === Firebase Update (Konzept) ===
-  db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // Wenn Sie Firebase verwenden, würden Sie hier die neue Person zur Bestellgruppe hinzufügen
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
   // ===================================
 }
 
@@ -378,7 +391,8 @@ function deletePerson(personId) {
   persons = persons.filter(p => p.id !== personId);
   renderAll();
   // === Firebase Update (Konzept) ===
-  db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // Wenn Sie Firebase verwenden, würden Sie hier die Personenliste aktualisieren
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
   // ===================================
 }
 
@@ -405,7 +419,8 @@ function autoAssignRemainingDrinks(newPersonId) {
       newPerson.drinks[remainingDrinkKey] += 1;
       renderAll();
       // === Firebase Update (Konzept) ===
-      db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+      // Aktualisierung der Personendaten nach Auto-Zuweisung
+      // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
       // ===================================
     }
   }
@@ -425,7 +440,8 @@ function changePersonDrink(personId,key,delta){
   p.drinks[key]=Math.max(0,p.drinks[key]+delta);
   renderAll();
   // === Firebase Update (Konzept) ===
-  db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
+  // Aktualisierung der Personendaten nach manueller Zuweisung
+  // db.ref('bierzelt/orders/' + currentOrderId + '/persons').set(persons);
   // ===================================
 }
 
@@ -502,16 +518,17 @@ function resetAll(){
 
   renderOrder(); // Gesamte Ansicht neu rendern
   // === Firebase Update (Konzept) ===
-  // Wenn Sie Firebase verwenden, würden Sie hier die alte Bestellgruppe in Firebase als "abgeschlossen" markieren
+  // Hier würden Sie die alte Bestellgruppe in Firebase als "abgeschlossen" markieren
   // oder löschen und eine neue unter der neuen currentOrderId erstellen.
-  db.ref('bierzelt/orders/' + currentOrderId).set({
-    waitstaffName: currentWaitstaffName,
-    orderQuantities: order,
-    persons: persons,
-    specialRequests: specialRequestsText,
-    status: 'active',
-    timestamp: new Date().toISOString()
-  });
+  // db.ref('bierzelt/orders/' + oldOrderId).remove(); // Oder Status setzen
+  // db.ref('bierzelt/orders/' + currentOrderId).set({
+  //   waitstaffName: currentWaitstaffName,
+  //   orderQuantities: order,
+  //   persons: persons,
+  //   specialRequests: specialRequestsText,
+  //   status: 'active',
+  //   timestamp: new Date().toISOString()
+  // });
   // ===================================
 }
 
