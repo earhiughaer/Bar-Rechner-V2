@@ -50,6 +50,12 @@
       margin-top: 1.2rem;
       border-radius: 8px;
     }
+    .person-title-row { /* NEU: Für den Abstand unter dem Titel */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.8rem; /* Mehr Platz unter dem Titel/X */
+    }
     .summary {
       margin-top: 0.8rem;
       font-weight: bold;
@@ -74,6 +80,19 @@
     }
     #reset:active {
       background: #d32f2f;
+    }
+
+    .delete-person-btn { /* Angepasst: CSS für den Lösch-Button */
+      background: none;
+      border: none;
+      color: #757575; /* Graue Farbe für das X (nicht rot) */
+      font-size: 1.1rem; /* Etwas kleiner */
+      padding: 0 0.5rem;
+      cursor: pointer;
+      font-weight: normal; /* Nicht fett */
+    }
+    .delete-person-btn:active {
+      color: #424242; /* Dunkleres Grau beim Drücken */
     }
 
     /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
@@ -111,6 +130,10 @@
         padding: 1.2rem;
         font-size: 1.3rem;
       }
+      .delete-person-btn { /* Anpassungen für den Lösch-Button auf Mobilgeräten */
+        font-size: 1.2rem; /* Etwas größer als Desktop */
+        padding: 0 0.6rem;
+      }
     }
   </style>
 </head>
@@ -118,10 +141,10 @@
 
 <h1>Bierzelt Rechner</h1>
 
-<h2>Bestellung erfassen</h2>
+<h2>1. Bestellung erfassen</h2>
 <div id="order-section"></div>
 
-<h2>Personen zuordnen</h2>
+<h2>2. Personen zuordnen</h2>
 <div id="persons"></div>
 <button id="addPersonBtn" onclick="addPerson()">➕ Person&nbsp;hinzufügen</button>
 
@@ -150,6 +173,11 @@ const order={};
 DRINKS.forEach(d=>order[d.key]=0);
 
 let persons=[];
+
+// Initial eine Person hinzufügen, wenn die Seite geladen wird
+// Dies wird in renderOrder() aufgerufen, um sicherzustellen, dass immer mindestens eine Person vorhanden ist.
+// Wir fügen es jetzt direkt hier ein, um sicherzustellen, dass die ID-Logik korrekt ist, wenn nur eine Person existiert.
+addPerson(); 
 
 function format(eur){return eur.toFixed(2).replace('.',',')+' €'}
 
@@ -186,12 +214,35 @@ function adjustAssignmentsAfterOrderChange(key){
 }
 
 function addPerson(){
-  const id=persons.length;
+  // Sicherstellen, dass die ID korrekt inkrementiert wird
+  // (falls Personen zwischendurch gelöscht wurden).
+  // Die ID für die erste Person ist 0, weitere IDs folgen aufsteigend.
+  const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
   const person={id,name:`Person ${id+1}`,drinks:{}};
   DRINKS.forEach(d=>person.drinks[d.key]=0);
   persons.push(person);
   renderAll();
 }
+
+function confirmDeletePerson(personId) {
+  const person = persons.find(p => p.id === personId);
+  if (!person) return;
+
+  const confirmation = confirm(`Möchten Sie ${person.name} wirklich löschen? Alle zugewiesenen Getränke werden freigegeben.`);
+  if (confirmation) {
+    deletePerson(personId);
+  }
+}
+
+function deletePerson(personId) {
+  persons = persons.filter(p => p.id !== personId);
+  // Wenn alle Personen außer der ersten gelöscht wurden, sollte die erste Person bleiben.
+  // Falls die einzige verbleibende Person gelöscht würde (was durch die if-Bedingung im renderPersons
+  // verhindert werden sollte), könnte dies ein Problem sein. Wir stellen sicher, dass immer
+  // mindestens eine Person vorhanden ist, indem wir in resetAll() und am Start addPerson() aufrufen.
+  renderAll();
+}
+
 
 function changePersonDrink(personId,key,delta){
   const p=persons.find(x=>x.id===personId);
@@ -215,13 +266,25 @@ function renderPersons(){
   persons.forEach(p=>{
     const card=document.createElement('div');
     card.className='person-card';
-    let html=`<strong>${p.name}</strong>`;
+    
+    // Titel für die Person mit optionalem Lösch-Button in einer flexbox
+    let personTitleHtml = `<div class="person-title-row">
+                             <strong>${p.name}</strong>`;
+    
+    // Lösch-Button nur anzeigen, wenn mehr als eine Person vorhanden ist UND es NICHT die erste Person ist (ID 0)
+    if (persons.length > 1 && p.id !== 0) { 
+      personTitleHtml += `<button class="delete-person-btn" onclick="confirmDeletePerson(${p.id})">✖</button>`;
+    }
+    personTitleHtml += `</div>`;
+    card.innerHTML = personTitleHtml; // Fügt den Titel und optionalen Button hinzu
+
     let sum=0;
     DRINKS.forEach(d=>{
       if(order[d.key]>0){
         const c=p.drinks[d.key];
         sum+=c*d.price;
-        html+=`<div class="drink-row">
+        // Füge Getränke-Zeilen an die bereits hinzugefügte card.innerHTML an
+        card.innerHTML+=`<div class="drink-row">
           <span class="label">${d.name}</span>
           <button onclick="changePersonDrink(${p.id},'${d.key}',-1)">−</button>
           <span class="count">${c}</span>
@@ -229,13 +292,11 @@ function renderPersons(){
         </div>`;
       }
     });
-    html+=`<div class="summary">Summe: ${format(sum)}</div>`;
-    card.innerHTML=html;
+    card.innerHTML+=`<div class="summary">Summe: ${format(sum)}</div>`;
     container.appendChild(card);
   });
 
   document.getElementById('addPersonBtn').style.display = 'block';
-
 }
 
 function renderRemaining(){
@@ -256,9 +317,13 @@ function renderRemaining(){
 function resetAll(){
   DRINKS.forEach(d=>order[d.key]=0);
   persons=[];
+  addPerson(); // Eine Person nach dem Reset hinzufügen, um immer mindestens eine zu haben
   renderOrder();
 }
 
+// Initialisiere die Anwendung
+// Beachte: Die initiale addPerson() wurde nach oben verschoben,
+// damit 'persons' schon beim ersten renderAll() befüllt ist.
 renderOrder();
 
 // JavaScript zur Vermeidung von Doppeltipp-Zoom
