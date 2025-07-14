@@ -1,137 +1,173 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Getränkerechner (kompakte Version)</title>
-<style>
-    :root{
-        --btn-size:56px;
-        --radius:12px;
-    }
-    *{box-sizing:border-box;}
-    body{
-        font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-        margin:1rem;
-        max-width:480px;
-    }
-    h1{font-size:1.5rem;text-align:center;margin-bottom:1rem;}
-    .item{display:flex;align-items:center;margin:0.45rem 0;gap:0.35rem;}
-    .name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    button.qty{
-        width:var(--btn-size);
-        height:var(--btn-size);
-        font-size:1.6rem;
-        border:none;
-        border-radius:var(--radius);
-        background:#e0e0e0;
-        touch-action:manipulation;
-    }
-    button.qty:active{background:#bdbdbd;}
-    .count{
-        width:3rem;
-        text-align:center;
-        font-size:1.3rem;
-    }
-    #total{margin-top:1.2rem;font-size:1.8rem;font-weight:bold;text-align:center;}
-    #reset{
-        margin-top:1rem;
-        width:100%;
-        padding:0.7rem;
-        font-size:1.2rem;
-        border:none;
-        border-radius:var(--radius);
-        background:#f44336;
-        color:#fff;
-        touch-action:manipulation;
-    }
-    #reset:active{background:#d32f2f;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bierzelt Rechner</title>
+  <style>
+    body{font-family:sans-serif;padding:1rem;max-width:600px;margin:auto}
+    h1,h2{text-align:center}
+    .item,.drink-row{display:flex;align-items:center;margin:0.45rem 0;gap:0.5rem}
+    .item .name,.drink-row .label{flex:1}
+    button{padding:0.4rem 0.8rem;font-size:1rem;border:none;border-radius:6px;background:#e0e0e0}
+    button:active{background:#bdbdbd}
+    .count,.person-sum{width:3rem;text-align:center}
+    .person-card{border:1px solid #ccc;padding:0.8rem;margin-top:1rem;border-radius:8px}
+    .summary{margin-top:0.6rem;font-weight:bold}
+    .unassigned{color:#d32f2f}
+    .done{color:#2e7d32}
+    #reset{width:100%;margin-top:1.2rem;padding:0.8rem;font-size:1.1rem;background:#f44336;color:#fff}
+    #reset:active{background:#d32f2f}
+  </style>
 </head>
 <body>
-<h1>Getränkerechner</h1>
 
-<!-- Aperol -->
-<div class="item" data-key="aperol">
-    <span class="name">Aperol (6,00&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('aperol',-1)">−</button>
-    <span id="c-aperol" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('aperol',1)">+</button>
-</div>
+<h1>Bierzelt Rechner</h1>
 
-<!-- Maß Bier/Radler -->
-<div class="item" data-key="mass">
-    <span class="name">Maß Bier/Radler (8,90&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('mass',-1)">−</button>
-    <span id="c-mass" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('mass',1)">+</button>
-</div>
+<h2>1. Bestellung erfassen</h2>
+<div id="order-section"></div>
 
-<!-- Halbe Bier/Radler/Alkoholfrei -->
-<div class="item" data-key="halbe">
-    <span class="name">Halbe Bier/Radler/Alk.-frei (4,80&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('halbe',-1)">−</button>
-    <span id="c-halbe" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('halbe',1)">+</button>
-</div>
+<h2>2. Personen zuordnen</h2>
+<div id="persons"></div>
+<button id="addPersonBtn" onclick="addPerson()">➕ Person&nbsp;hinzufügen</button>
 
-<!-- Weinschorle -->
-<div class="item" data-key="weinschorle">
-    <span class="name">Weinschorle (4,60&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('weinschorle',-1)">−</button>
-    <span id="c-weinschorle" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('weinschorle',1)">+</button>
-</div>
+<h2>Offene&nbsp;Mengen</h2>
+<div id="remaining"></div>
 
-<!-- Softdrinks & Wasser -->
-<div class="item" data-key="soft">
-    <span class="name">Softdrinks & Wasser (3,20&nbsp;€)</span>
-    <button class="qty" type="button" onclick="adjust('soft',-1)">−</button>
-    <span id="c-soft" class="count">0</span>
-    <button class="qty" type="button" onclick="adjust('soft',1)">+</button>
-</div>
-
-<h2 id="total">Summe: 0,00&nbsp;€</h2>
-<button id="reset" type="button" onclick="resetAll()">Zurücksetzen</button>
+<button id="reset" onclick="resetAll()">Zurücksetzen</button>
 
 <script>
-// Preise in € (Gruppenpreise)
-const PRICES = {
-    aperol: 6.0,
-    mass: 8.9,
-    halbe: 4.8,
-    weinschorle: 4.6,
-    soft: 3.2
-};
+const DRINKS=[
+  {key:"mass_bier",   name:"🍺 Maß Bier",           price:8.9},
+  {key:"mass_radler", name:"🍺🍋 Maß Radler",         price:8.9},
+  {key:"halbe_bier",  name:"🍻 Halbe Bier",         price:4.8},
+  {key:"halbe_radler",name:"🍻🍋 Halbe Radler",       price:4.8},
+  {key:"wasser",      name:"💧 Wasser",             price:3.2},
+  {key:"apfelschorle",name:"🍎 Apfelschorle",       price:3.2},
+  {key:"limo_gelb",   name:"🍋 Limo gelb",          price:3.2},
+  {key:"limo_weiss",  name:"⚪️ Limo weiß",          price:3.2},
+  {key:"aperol",      name:"🍊 Aperol",             price:6.0},
+  {key:"weinschorle", name:"🍷 Weinschorle 0,5",    price:4.6}
+];
 
-const COUNTS = Object.fromEntries(Object.keys(PRICES).map(k => [k, 0]));
+const drinkMap=Object.fromEntries(DRINKS.map(d=>[d.key,d]));
 
-function adjust(key, delta){
-    COUNTS[key] += delta;
-    if(COUNTS[key] < 0) COUNTS[key] = 0;
-    document.getElementById('c-' + key).textContent = COUNTS[key];
-    calcTotal();
+const order={};
+DRINKS.forEach(d=>order[d.key]=0);
+
+let persons=[];
+
+function format(eur){return eur.toFixed(2).replace('.',',')+' €'}
+
+function renderOrder(){
+  const el=document.getElementById('order-section');
+  el.innerHTML='';
+  DRINKS.forEach(d=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<span class="name">${d.name} (${format(d.price)})</span>
+      <button onclick="changeOrder('${d.key}',-1)">−</button>
+      <span class="count" id="order-${d.key}">${order[d.key]}</span>
+      <button onclick="changeOrder('${d.key}',1)">+</button>`;
+    el.appendChild(div);
+  });
+  renderAll();
 }
 
-function calcTotal(){
-    let sum = 0;
-    for(const k in COUNTS){
-        sum += COUNTS[k] * PRICES[k];
+function changeOrder(key,delta){
+  order[key]=Math.max(0,order[key]+delta);
+  document.getElementById('order-'+key).textContent=order[key];
+  adjustAssignmentsAfterOrderChange(key);
+  renderAll();
+}
+
+function adjustAssignmentsAfterOrderChange(key){
+  let available=order[key];
+  persons.forEach(p=>{
+    if(p.drinks[key]>available){
+      p.drinks[key]=available;
     }
-    document.getElementById('total').textContent = 'Summe: ' + format(sum);
+    available-=p.drinks[key];
+  });
+}
+
+function addPerson(){
+  const id=persons.length;
+  const person={id,name:`Person ${id+1}`,drinks:{}};
+  DRINKS.forEach(d=>person.drinks[d.key]=0);
+  persons.push(person);
+  renderAll();
+}
+
+function changePersonDrink(personId,key,delta){
+  const p=persons.find(x=>x.id===personId);
+  if(!p) return;
+  if(delta>0){
+    const assignedTotal=persons.reduce((s,per)=>s+per.drinks[key],0);
+    if(assignedTotal>=order[key]) return;
+  }
+  p.drinks[key]=Math.max(0,p.drinks[key]+delta);
+  renderAll();
+}
+
+function renderAll(){
+  renderPersons();
+  renderRemaining();
+}
+
+function renderPersons(){
+  const container=document.getElementById('persons');
+  container.innerHTML='';
+  persons.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='person-card';
+    let html=`<strong>${p.name}</strong>`;
+    let sum=0;
+    DRINKS.forEach(d=>{
+      if(order[d.key]>0){
+        const c=p.drinks[d.key];
+        sum+=c*d.price;
+        html+=`<div class="drink-row">
+          <span class="label">${d.name}</span>
+          <button onclick="changePersonDrink(${p.id},'${d.key}',-1)">−</button>
+          <span class="count">${c}</span>
+          <button onclick="changePersonDrink(${p.id},'${d.key}',1)">+</button>
+        </div>`;
+      }
+    });
+    html+=`<div class="summary">Summe: ${format(sum)}</div>`;
+    card.innerHTML=html;
+    container.appendChild(card);
+  });
+
+  document.getElementById('addPersonBtn').style.display = 'block';
+
+}
+
+function renderRemaining(){
+  const div=document.getElementById('remaining');
+  div.innerHTML='';
+  DRINKS.forEach(d=>{
+    const total=order[d.key];
+    // Nur anzeigen, wenn das Getränk bestellt wurde
+    if (total > 0) {
+      const assigned=persons.reduce((s,p)=>s+p.drinks[d.key],0);
+      const left=total-assigned;
+      const cls=left===0?'done':'unassigned';
+      div.innerHTML+=`<div class="${cls}">${d.name}: ${left} ${left===0?'✔️':'offen'}</div>`;
+    }
+  });
 }
 
 function resetAll(){
-    for(const k in COUNTS){
-        COUNTS[k] = 0;
-        document.getElementById('c-' + k).textContent = 0;
-    }
-    calcTotal();
+  DRINKS.forEach(d=>order[d.key]=0);
+  persons=[];
+  renderOrder();
 }
 
-function format(val){
-    return val.toFixed(2).replace('.', ',') + ' €';
-}
+renderOrder();
 </script>
+
 </body>
 </html>
+```
