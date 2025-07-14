@@ -5,187 +5,289 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Bierzelt Rechner</title>
   <style>
+    /* Allgemeine Stile */
     body {
-      font-family: sans-serif;
-      padding: 1rem;
-      max-width: 600px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 1.5rem;
+      max-width: 650px;
       margin: auto;
       font-size: 1.1rem;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f8f8;
     }
     h1, h2 {
       text-align: center;
-      font-size: 2rem;
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
     }
-    h2 {
-        font-size: 1.6rem;
-    }
+    h1 { font-size: 2.5rem; color: #e67e22; }
+    h2 { font-size: 1.8rem; border-bottom: 2px solid #ddd; padding-bottom: 0.8rem; margin-top: 2rem; }
+
+    /* Item-Listen (Bestellung & Getränke pro Person) */
     .item, .drink-row {
       display: flex;
       align-items: center;
-      margin: 0.6rem 0;
-      gap: 0.5rem;
+      margin: 0.8rem 0;
+      background-color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .item .name, .drink-row .label {
       flex: 1;
       font-size: 1.2rem;
+      font-weight: 500;
+      color: #555;
     }
+
+    /* Buttons */
     button {
-      padding: 0.6rem 1.2rem;
+      padding: 0.7rem 1.4rem;
       font-size: 1.1rem;
       border: none;
       border-radius: 6px;
-      background: #e0e0e0;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      margin: 0 0.2rem;
     }
     button:active {
-      background: #bdbdbd;
+      background: #2980b9;
+      transform: translateY(1px);
     }
+    /* Minus-Button */
+    button:first-of-type { /* Applies to the first button in .item or .drink-row */
+      background: #e74c3c;
+    }
+    button:first-of-type:active {
+      background: #c0392b;
+    }
+    /* Plus-Button */
+    button:last-of-type { /* Applies to the last button in .item or .drink-row */
+      background: #2ecc71;
+    }
+    button:last-of-type:active {
+      background: #27ae60;
+    }
+
+
     .count, .person-sum {
-      width: 3rem;
+      width: 3.5rem;
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #34495e;
     }
+
+    /* Personenkarten */
     .person-card {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-top: 1.2rem;
-      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 1.2rem;
+      margin-top: 1.5rem;
+      border-radius: 10px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
     }
     .person-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .person-title-row strong {
+      font-size: 1.5rem;
+      color: #3498db;
     }
     .summary {
-      margin-top: 0.8rem;
+      margin-top: 1rem;
       font-weight: bold;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
+      text-align: right;
+      color: #2c3e50;
     }
     .unassigned, .done {
       font-size: 1.2rem;
+      padding: 0.3rem 0;
     }
     .unassigned {
-      color: #d32f2f;
+      color: #e74c3c;
+      font-weight: bold;
     }
     .done {
-      color: #2e7d32;
-    }
-    #reset {
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      font-size: 1.2rem;
-      background: #f44336;
-      color: #fff;
-    }
-    #reset:active {
-      background: #d32f2f;
+      color: #27ae60;
+      font-weight: bold;
     }
 
+    /* Reset Button */
+    #reset {
+      width: 100%;
+      margin-top: 2rem;
+      padding: 1.2rem;
+      font-size: 1.3rem;
+      background: #e74c3c;
+      color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #reset:active {
+      background: #c0392b;
+    }
+
+    /* Löschen Person Button */
     .delete-person-btn {
       background: none;
       border: none;
-      color: #757575;
-      font-size: 1.1rem;
+      color: #95a5a6;
+      font-size: 1.2rem;
       padding: 0 0.5rem;
       cursor: pointer;
       font-weight: normal;
+      transition: color 0.2s ease;
     }
     .delete-person-btn:active {
-      color: #424242;
+      color: #c0392b;
+      transform: translateY(1px);
     }
 
     /* Sonderwünsche Textfeld */
     .special-requests-container {
       margin-top: 2rem;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      padding: 1.2rem;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
     }
     .special-requests-container h2 {
       margin-top: 0;
       text-align: left;
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 1rem;
     }
     textarea {
-      width: calc(100% - 10px);
-      min-height: 80px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
+      width: calc(100% - 20px); /* Adjust for padding */
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1.1rem;
       box-sizing: border-box;
+      resize: vertical;
+      background-color: #fefefe;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
     }
 
     /* Bedienung Name Input */
     .waitstaff-section {
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       text-align: center;
+      padding: 1rem;
+      background-color: #ecf0f1;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .waitstaff-section label {
       display: block;
-      margin-bottom: 0.5rem;
-      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      font-size: 1.3rem;
       font-weight: bold;
+      color: #34495e;
     }
     .waitstaff-section input[type="text"] {
-      width: calc(100% - 2rem);
-      padding: 0.8rem;
+      width: calc(100% - 2.5rem);
+      padding: 0.9rem;
       font-size: 1.2rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: 1px solid #bdc3c7;
+      border-radius: 8px;
       text-align: center;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .waitstaff-section input[type="text"]:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 8px rgba(52, 152, 219, 0.6);
     }
     .order-id-display {
-        margin-top: 1rem;
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #555;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #7f8c8d;
     }
+
+    /* Add Person Button */
+    #addPersonBtn {
+      display: block;
+      width: calc(100% - 0.4rem); /* Adjust for margin of buttons within item */
+      margin: 1.5rem auto 0 auto;
+      padding: 1rem;
+      background-color: #9b59b6;
+      color: white;
+      font-size: 1.3rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #addPersonBtn:active {
+      background-color: #8e44ad;
+    }
+
 
     /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
     @media (max-width: 480px) {
       body {
-        font-size: 1.2rem;
+        padding: 1rem;
+        font-size: 1rem;
       }
       h1 {
-        font-size: 2.2rem;
+        font-size: 2rem;
       }
       h2 {
-        font-size: 1.8rem;
-      }
-      .item {
-        align-items: center;
+        font-size: 1.6rem;
       }
       .item, .drink-row {
-        gap: 0.4rem;
+        margin: 0.6rem 0;
+        padding: 0.5rem 0.8rem;
       }
       .item .name, .drink-row .label {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
       }
       button {
-        padding: 0.7rem 1.4rem;
-        font-size: 1.2rem;
+        padding: 0.6rem 1.1rem;
+        font-size: 1rem;
       }
       .count {
-        width: 3.5rem;
-        font-size: 1.3rem;
+        width: 3rem;
+        font-size: 1.2rem;
       }
       .summary {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
       }
       .unassigned, .done {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
       }
       #reset {
-        padding: 1.2rem;
-        font-size: 1.3rem;
+        padding: 1rem;
+        font-size: 1.2rem;
       }
       .delete-person-btn {
-        font-size: 1.2rem;
-        padding: 0 0.6rem;
+        font-size: 1.1rem;
       }
       .waitstaff-section input[type="text"] {
-        width: calc(100% - 1.5rem);
+        width: calc(100% - 2rem);
+        padding: 0.7rem;
+        font-size: 1.1rem;
+      }
+      #addPersonBtn {
+        padding: 0.8rem;
+        font-size: 1.2rem;
       }
     }
   </style>
@@ -222,10 +324,10 @@
 <script>
 // === Firebase Initialisierung - WICHTIG: Dies ist die kompatible Syntax ===
 const firebaseConfig = {
-  apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
+  apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08", // ERSETZE DIES DURCH DEINEN API KEY
   authDomain: "bierzelt-rechner.firebaseapp.com",
-  databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "bierzelt-rechner",
+  databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app", // ERSETZE DIES DURCH DEINE DATABASE URL
+  projectId: "bierzelt-rechner", // ERSETZE DIES DURCH DEINE PROJECT ID
   storageBucket: "bierzelt-rechner.firebasestorage.app",
   messagingSenderId: "322991437255",
   appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
