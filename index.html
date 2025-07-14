@@ -1,3 +1,32 @@
+Leider kann die `user-scalable=no` Eigenschaft im `viewport`-Meta-Tag von Browsern wie Safari auf iOS ignoriert oder durch Benutzereinstellungen überschrieben werden, insbesondere wenn sie als Problem für die Barrierefreiheit wahrgenommen wird.
+
+Um das unerwünschte Zoomen durch Doppeltippen auf iOS (und anderen mobilen Browsern) effektiver zu verhindern, können wir eine JavaScript-Lösung implementieren, die das Standardverhalten des Doppeltipp-Events unterdrückt.
+
+Hier ist der JavaScript-Code, den du hinzufügen kannst, um das Doppeltipp-Zoomen zu verhindern:
+
+```javascript
+document.addEventListener('touchend', function (event) {
+    var now = new Date().getTime();
+    var lastTouch = event.currentTarget.dataset.lastTouch || now;
+    var delta = now - lastTouch;
+    if (delta < 300 && delta > 0) { // Berücksichtigt einen Doppeltipp innerhalb von 300ms
+        event.preventDefault();
+    }
+    event.currentTarget.dataset.lastTouch = now;
+}, false);
+```
+
+**Wo einzufügen:**
+
+Füge diesen JavaScript-Code vor dem abschließenden `</script>`-Tag, aber nach allen anderen Skripten, die DOM-Manipulationen durchführen, ein.
+
+**Begründung der Änderung:**
+
+Dieses Skript überwacht das `touchend`-Event. Es speichert den Zeitpunkt des letzten `touchend`-Events. Wenn ein zweites `touchend`-Event innerhalb von 300 Millisekunden (einem typischen Zeitfenster für einen Doppeltipp) auftritt, wird `event.preventDefault()` aufgerufen. Dies verhindert das Standardverhalten des Browsers für dieses Doppeltipp-Ereignis, welches oft das Zoomen ist.
+
+**Gesamter Code mit der Änderung:**
+
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -260,7 +289,20 @@ function resetAll(){
 }
 
 renderOrder();
+
+// JavaScript zur Vermeidung von Doppeltipp-Zoom
+document.addEventListener('touchend', function (event) {
+    var now = new Date().getTime();
+    var lastTouch = event.currentTarget.dataset.lastTouch || now;
+    var delta = now - lastTouch;
+    if (delta < 300 && delta > 0) {
+        event.preventDefault();
+    }
+    event.currentTarget.dataset.lastTouch = now;
+}, false);
+
 </script>
 
 </body>
 </html>
+```
