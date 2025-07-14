@@ -21,7 +21,7 @@
     }
     .item, .drink-row {
       display: flex;
-      align-items: center;
+      align-items: center; /* Zurückgesetzt */
       margin: 0.6rem 0;
       gap: 0.5rem; /* Abstand zwischen Elementen wurde reduziert */
     }
@@ -50,11 +50,11 @@
       margin-top: 1.2rem;
       border-radius: 8px;
     }
-    .person-title-row { /* NEU: Für den Abstand unter dem Titel */
+    .person-title-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 0.8rem; /* Mehr Platz unter dem Titel/X */
+        margin-bottom: 0.8rem;
     }
     .summary {
       margin-top: 0.8rem;
@@ -82,23 +82,23 @@
       background: #d32f2f;
     }
 
-    .delete-person-btn { /* Angepasst: CSS für den Lösch-Button */
+    .delete-person-btn {
       background: none;
       border: none;
-      color: #757575; /* Graue Farbe für das X (nicht rot) */
-      font-size: 1.1rem; /* Etwas kleiner */
+      color: #757575;
+      font-size: 1.1rem;
       padding: 0 0.5rem;
       cursor: pointer;
-      font-weight: normal; /* Nicht fett */
+      font-weight: normal;
     }
     .delete-person-btn:active {
-      color: #424242; /* Dunkleres Grau beim Drücken */
+      color: #424242;
     }
 
     /* Media Queries für kleinere Bildschirme (z.B. Mobiltelefone) */
     @media (max-width: 480px) {
       body {
-        font-size: 1.2rem; /* Noch größere Basis-Schriftgröße auf sehr kleinen Bildschirmen */
+        font-size: 1.2rem;
       }
       h1 {
         font-size: 2.2rem;
@@ -106,19 +106,22 @@
       h2 {
         font-size: 1.8rem;
       }
+      .item {
+        align-items: center; /* Zurückgesetzt auf ursprünglich */
+      }
       .item, .drink-row {
-        gap: 0.4rem; /* Abstand zwischen Elementen auf Mobilgeräten noch weiter reduziert */
+        gap: 0.4rem;
       }
       .item .name, .drink-row .label {
-        font-size: 1.3rem; /* Größere Schrift für Namen/Labels auf Mobilgeräten */
+        font-size: 1.3rem;
       }
       button {
         padding: 0.7rem 1.4rem;
-        font-size: 1.2rem; /* Grössere Schrift in Buttons auf Mobilgeräten */
+        font-size: 1.2rem;
       }
       .count {
-        width: 3.5rem; /* Breite Zählerfelder auf Mobilgeräten angepasst */
-        font-size: 1.3rem; /* Grössere Schrift für Zähler auf Mobilgeräten */
+        width: 3.5rem;
+        font-size: 1.3rem;
       }
       .summary {
         font-size: 1.4rem;
@@ -130,7 +133,7 @@
         padding: 1.2rem;
         font-size: 1.3rem;
       }
-      .delete-person-btn { /* Anpassungen für den Lösch-Button auf Mobilgeräten */
+      .delete-person-btn {
         font-size: 1.2rem;
         padding: 0 0.6rem;
       }
@@ -185,6 +188,7 @@ function renderOrder(){
   DRINKS.forEach(d=>{
     const div=document.createElement('div');
     div.className='item';
+    // Preis zurück in die gleiche Zeile wie der Name
     div.innerHTML=`<span class="name">${d.name} (${format(d.price)})</span>
       <button onclick="changeOrder('${d.key}',-1)">−</button>
       <span class="count" id="order-${d.key}">${order[d.key]}</span>
@@ -216,7 +220,8 @@ function addPerson(){
   const person={id,name:`Person ${id+1}`,drinks:{}};
   DRINKS.forEach(d=>person.drinks[d.key]=0);
   persons.push(person);
-  renderAll();
+  renderAll(); // Render first to update the DOM with the new person
+  autoAssignRemainingDrinks(id); // Call auto-assign for the newly added person
 }
 
 function confirmDeletePerson(personId) {
@@ -233,6 +238,34 @@ function deletePerson(personId) {
   persons = persons.filter(p => p.id !== personId);
   renderAll();
 }
+
+function autoAssignRemainingDrinks(newPersonId) {
+  let remainingDrinkKey = null;
+  let remainingAmount = 0; // Not used for direct assignment anymore, but for checking if > 0
+  let countOfDrinksWithRemaining = 0;
+
+  DRINKS.forEach(d => {
+    const totalOrdered = order[d.key];
+    const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[d.key], 0);
+    const leftUnassigned = totalOrdered - assignedAcrossAllPersons;
+
+    if (leftUnassigned > 0) {
+      countOfDrinksWithRemaining++;
+      remainingDrinkKey = d.key;
+      remainingAmount = leftUnassigned; // Store it, but only 1 unit will be assigned
+    }
+  });
+
+  // If exactly one product type remains unassigned AND there's at least one unit left, assign 1 unit to the new person
+  if (countOfDrinksWithRemaining === 1 && remainingDrinkKey !== null && remainingAmount > 0) {
+    const newPerson = persons.find(p => p.id === newPersonId);
+    if (newPerson) {
+      newPerson.drinks[remainingDrinkKey] += 1; // Assign only 1 unit
+      renderAll(); // Re-render to show the auto-assigned drinks and updated remaining quantities
+    }
+  }
+}
+
 
 function changePersonDrink(personId,key,delta){
   const p=persons.find(x=>x.id===personId);
@@ -263,33 +296,23 @@ function renderPersons(){
     const card=document.createElement('div');
     card.className='person-card';
     
-    // Titel für die Person mit optionalem Lösch-Button in einer flexbox
     let personTitleHtml = `<div class="person-title-row">
                              <strong>${p.name}</strong>`;
     
-    // Lösch-Button nur anzeigen, wenn mehr als eine Person vorhanden ist UND es NICHT die erste Person ist (ID 0)
     if (persons.length > 1 && p.id !== 0) { 
       personTitleHtml += `<button class="delete-person-btn" onclick="confirmDeletePerson(${p.id})">✖</button>`;
     }
     personTitleHtml += `</div>`;
-    card.innerHTML = personTitleHtml; // Fügt den Titel und optionalen Button hinzu
+    card.innerHTML = personTitleHtml;
 
     let sum=0;
     DRINKS.forEach(d=>{
-      const totalOrdered = order[d.key]; // Gesamt bestellte Menge dieses Getränks
-
-      // Berechne, wie viel dieses Getränks bereits über ALLE Personen zugewiesen wurde
+      const totalOrdered = order[d.key];
       const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[d.key], 0);
-
-      // Berechne, wie viel von diesem Getränk noch unzugewiesen ist
       const leftUnassigned = totalOrdered - assignedAcrossAllPersons;
 
-      // Die Auswahlmöglichkeit (Getränkereihe mit +/- Buttons) soll erscheinen, wenn:
-      // 1. Das Getränk überhaupt bestellt wurde UND noch unzugewiesen ist (für neue Zuweisungen)
-      // ODER
-      // 2. Die aktuelle Person bereits etwas von diesem Getränk zugewiesen hat (damit sie es reduzieren kann)
       if ( (totalOrdered > 0 && leftUnassigned > 0) || (p.drinks[d.key] > 0) ) {
-        const c=p.drinks[d.key]; // Anzahl des Getränks, das dieser Person zugewiesen ist
+        const c=p.drinks[d.key];
         sum+=c*d.price;
         card.innerHTML+=`<div class="drink-row">
           <span class="label">${d.name}</span>
@@ -311,7 +334,6 @@ function renderRemaining(){
   div.innerHTML='';
   DRINKS.forEach(d=>{
     const total=order[d.key];
-    // Nur anzeigen, wenn das Getränk bestellt wurde
     if (total > 0) {
       const assigned=persons.reduce((s,p)=>s+p.drinks[d.key],0);
       const left=total-assigned;
@@ -324,14 +346,12 @@ function renderRemaining(){
 function resetAll(){
   DRINKS.forEach(d=>order[d.key]=0);
   persons=[];
-  addPerson(); // Eine Person nach dem Reset hinzufügen, um immer mindestens eine zu haben
+  addPerson();
   renderOrder();
 }
 
-// Initialisiere die Anwendung
 renderOrder();
 
-// JavaScript zur Vermeidung von Doppeltipp-Zoom
 document.addEventListener('touchend', function (event) {
     var now = new Date().getTime();
     var lastTouch = event.currentTarget.dataset.lastTouch || now;
