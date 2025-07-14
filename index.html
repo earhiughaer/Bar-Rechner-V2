@@ -8,7 +8,7 @@
     body {
       font-family: sans-serif;
       padding: 1rem;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       font-size: 1.1rem;
     }
@@ -30,6 +30,7 @@
       border: none;
       border-radius: 6px;
       background: #e0e0e0;
+      cursor: pointer;
     }
     button:active {
       background: #bdbdbd;
@@ -67,6 +68,27 @@
       font-size: 1rem;
       margin-top: 0.5rem;
     }
+    .send-btn {
+      display: block;
+      margin: 1.5rem auto 0;
+      background: #4caf50;
+      color: white;
+      padding: 0.8rem 2rem;
+      font-size: 1.2rem;
+    }
+    .person-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .delete-person-btn {
+      background: none;
+      color: #888;
+      font-size: 1.1rem;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -85,11 +107,18 @@
 
     <div class="special-requests-container">
       <h2>Sonderwünsche</h2>
-      <textarea id="specialRequests" placeholder="z. B. 'Tisch 8 – Maß ohne Schaum'"></textarea>
+      <textarea id="specialRequests" placeholder="z. B. Saure Radler-Halbe"></textarea>
     </div>
 
+    <h2>2. Personen zuordnen</h2>
+    <div id="persons"></div>
+    <button onclick="addPerson()">➕ Person hinzufügen</button>
+
+    <h2>Noch ausstehend</h2>
+    <div id="remaining"></div>
+
     <div class="summary" id="orderTotalSummary"></div>
-    <button onclick="sendOrder()">Bestellung senden</button>
+    <button class="send-btn" onclick="sendOrder()">Bestellung senden</button>
 
     <button id="reset" onclick="resetAll()">Zurücksetzen</button>
   </div>
@@ -128,24 +157,43 @@
       { key: "spezi", name: "🥤 Spezi", price: 3.2 },
       { key: "wasser", name: "💧 Wasser", price: 3.2 },
     ];
-    const drinkMap = Object.fromEntries(DRINKS.map(d => [d.key, d]));
 
+    const drinkMap = Object.fromEntries(DRINKS.map(d => [d.key, d]));
     let waitstaffName = localStorage.getItem("waitstaffName");
     const order = {};
     DRINKS.forEach(d => order[d.key] = 0);
+    let persons = [];
 
     function setWaitstaffName() {
       const input = document.getElementById("waitstaffNameInput");
       const name = input.value.trim();
-      if (!name) {
-        alert("Bitte gib deinen Namen ein.");
-        return;
-      }
+      if (!name) return alert("Bitte Namen eingeben.");
       waitstaffName = name;
       localStorage.setItem("waitstaffName", name);
       document.getElementById("waitstaffNamePrompt").style.display = "none";
       document.getElementById("app").style.display = "block";
-      renderOrder();
+      addPerson();
+      renderAll();
+    }
+
+    function format(eur) {
+      return eur.toFixed(2).replace(".", ",") + " €";
+    }
+
+    function changeOrder(key, delta) {
+      order[key] = Math.max(0, order[key] + delta);
+      adjustAssignmentsAfterOrderChange(key);
+      renderAll();
+    }
+
+    function adjustAssignmentsAfterOrderChange(key) {
+      let available = order[key];
+      persons.forEach(p => {
+        if (p.drinks[key] > available) {
+          p.drinks[key] = available;
+        }
+        available -= p.drinks[key];
+      });
     }
 
     function renderOrder() {
@@ -159,35 +207,95 @@
           <span class="name">${d.name} (${format(d.price)})</span>
           <button onclick="changeOrder('${d.key}', -1)">−</button>
           <span class="count" id="count-${d.key}">${order[d.key]}</span>
-          <button onclick="changeOrder('${d.key}', 1)">+</button>
-        `;
+          <button onclick="changeOrder('${d.key}', 1)">+</button>`;
         el.appendChild(div);
         total += order[d.key] * d.price;
       });
       document.getElementById("orderTotalSummary").textContent = `Gesamtsumme Bestellung: ${format(total)}`;
     }
 
-    function changeOrder(key, delta) {
-      order[key] = Math.max(0, order[key] + delta);
-      document.getElementById(`count-${key}`).textContent = order[key];
-      renderOrder(); // Damit auch Summe neu berechnet wird
+    function renderPersons() {
+      const container = document.getElementById("persons");
+      container.innerHTML = "";
+      persons.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "person-card";
+        let sum = 0;
+
+        card.innerHTML = `
+          <div class="person-title-row">
+            <strong>${p.name}</strong>
+            ${p.id !== 0 ? `<button class="delete-person-btn" onclick="deletePerson(${p.id})">✖</button>` : ""}
+          </div>
+        `;
+
+        DRINKS.forEach(d => {
+          const c = p.drinks[d.key];
+          if (order[d.key] > 0 || c > 0) {
+            card.innerHTML += `
+              <div class="drink-row">
+                <span class="label">${d.name}</span>
+                <button onclick="changePersonDrink(${p.id}, '${d.key}', -1)">−</button>
+                <span class="count">${c}</span>
+                <button onclick="changePersonDrink(${p.id}, '${d.key}', 1)">+</button>
+              </div>`;
+            sum += c * d.price;
+          }
+        });
+        card.innerHTML += `<div class="summary">Summe: ${format(sum)}</div>`;
+        container.appendChild(card);
+      });
     }
 
-    function format(eur) {
-      return eur.toFixed(2).replace(".", ",") + " €";
+    function renderRemaining() {
+      const div = document.getElementById("remaining");
+      div.innerHTML = "";
+      DRINKS.forEach(d => {
+        const assigned = persons.reduce((s, p) => s + p.drinks[d.key], 0);
+        const left = order[d.key] - assigned;
+        if (order[d.key] > 0) {
+          const cls = left === 0 ? "done" : "unassigned";
+          div.innerHTML += `<div class="${cls}">${d.name}: ${left} ${left === 0 ? "✔️" : "ausstehend"}</div>`;
+        }
+      });
+    }
+
+    function renderAll() {
+      renderOrder();
+      renderPersons();
+      renderRemaining();
+    }
+
+    function addPerson() {
+      const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
+      const person = { id, name: `Person ${id + 1}`, drinks: {} };
+      DRINKS.forEach(d => person.drinks[d.key] = 0);
+      persons.push(person);
+      renderAll();
+    }
+
+    function deletePerson(id) {
+      persons = persons.filter(p => p.id !== id);
+      renderAll();
+    }
+
+    function changePersonDrink(pid, key, delta) {
+      const p = persons.find(x => x.id === pid);
+      const assigned = persons.reduce((s, p) => s + p.drinks[key], 0);
+      if (delta > 0 && assigned >= order[key]) return;
+      p.drinks[key] = Math.max(0, p.drinks[key] + delta);
+      renderAll();
     }
 
     function sendOrder() {
-      const totalDrinks = Object.values(order).reduce((sum, v) => sum + v, 0);
-      if (totalDrinks === 0) {
-        alert("Bitte mindestens ein Getränk auswählen.");
-        return;
-      }
+      const totalDrinks = Object.values(order).reduce((s, v) => s + v, 0);
+      if (totalDrinks === 0) return alert("Bitte Getränke auswählen.");
 
       const specialRequests = document.getElementById("specialRequests").value.trim();
       const payload = {
         waitstaffName,
         orderQuantities: { ...order },
+        persons,
         specialRequests,
         timestamp: Date.now()
       };
@@ -196,21 +304,24 @@
         alert("Bestellung gesendet!");
         resetAll();
       }).catch(err => {
-        alert("Fehler beim Senden: " + err.message);
+        alert("Fehler: " + err.message);
       });
     }
 
     function resetAll() {
       DRINKS.forEach(d => order[d.key] = 0);
-      renderOrder();
+      persons = [];
+      addPerson();
       document.getElementById("specialRequests").value = "";
+      renderAll();
     }
 
-    // Automatischer Start, wenn Name schon gespeichert ist
+    // Autostart, wenn Name vorhanden
     if (waitstaffName) {
       document.getElementById("waitstaffNamePrompt").style.display = "none";
       document.getElementById("app").style.display = "block";
-      renderOrder();
+      addPerson();
+      renderAll();
     }
   </script>
 </body>
