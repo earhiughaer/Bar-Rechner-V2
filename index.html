@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Bierzelt Rechner - Bedienung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bierzelt Rechner</title>
   <style>
     body {
       font-family: sans-serif;
@@ -14,10 +14,6 @@
     }
     h1, h2 {
       text-align: center;
-      font-size: 2rem;
-    }
-    h2 {
-      font-size: 1.6rem;
     }
     .item, .drink-row {
       display: flex;
@@ -27,43 +23,30 @@
     }
     .item .name, .drink-row .label {
       flex: 1;
-      font-size: 1.2rem;
     }
     button {
-      padding: 0.6rem 1.2rem;
-      font-size: 1.1rem;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
       border: none;
       border-radius: 6px;
       background: #e0e0e0;
-      cursor: pointer;
     }
     button:active {
       background: #bdbdbd;
     }
-    .count, .person-sum {
+    .count {
       width: 3rem;
       text-align: center;
-      font-size: 1.2rem;
     }
     .person-card {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin-top: 1.2rem;
+      margin-top: 1rem;
       border-radius: 8px;
     }
-    .person-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.8rem;
-    }
     .summary {
-      margin-top: 0.8rem;
+      margin-top: 1rem;
       font-weight: bold;
-      font-size: 1.3rem;
-    }
-    .unassigned, .done {
-      font-size: 1.2rem;
     }
     .unassigned {
       color: #d32f2f;
@@ -73,393 +56,162 @@
     }
     #reset {
       width: 100%;
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       padding: 1rem;
-      font-size: 1.2rem;
       background: #f44336;
-      color: #fff;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-    }
-    #reset:active {
-      background: #d32f2f;
-    }
-    .delete-person-btn {
-      background: none;
-      border: none;
-      color: #757575;
-      font-size: 1.1rem;
-      padding: 0 0.5rem;
-      cursor: pointer;
-      font-weight: normal;
-    }
-    .delete-person-btn:active {
-      color: #424242;
-    }
-    /* Sonderwünsche Textfeld kleiner */
-    .special-requests-container {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    .special-requests-container h2 {
-      margin-top: 0;
-      font-size: 1.3rem;
-      text-align: left;
+      color: white;
     }
     textarea {
-      width: calc(100% - 10px);
-      min-height: 60px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-    /* Bedienungsname Eingabe */
-    #waitstaffNameContainer {
-      margin: 1rem 0;
-      text-align: center;
-    }
-    #waitstaffName {
-      font-size: 1.2rem;
-      padding: 0.3rem 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 50%;
-      max-width: 200px;
-      text-align: center;
-    }
-    /* Media Queries */
-    @media (max-width: 480px) {
-      body { font-size: 1.2rem; }
-      h1 { font-size: 2.2rem; }
-      h2 { font-size: 1.8rem; }
-      .item .name, .drink-row .label { font-size: 1.3rem; }
-      button { padding: 0.7rem 1.4rem; font-size: 1.2rem; }
-      .count { width: 3.5rem; font-size: 1.3rem; }
-      .summary { font-size: 1.4rem; }
-      .unassigned, .done { font-size: 1.3rem; }
-      #reset { padding: 1.2rem; font-size: 1.3rem; }
-      .delete-person-btn { font-size: 1.2rem; padding: 0 0.6rem; }
-      #waitstaffName { font-size: 1.3rem; width: 70%; }
-      .special-requests-container h2 { font-size: 1.1rem; }
-      textarea { font-size: 0.85rem; min-height: 50px; }
+      width: 100%;
+      min-height: 80px;
+      font-size: 1rem;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 <body>
+  <h1>Bierzelt Rechner</h1>
 
-<h1>Bierzelt Rechner - Bedienung</h1>
+  <!-- Bedienungsname -->
+  <div id="waitstaffNamePrompt">
+    <label for="waitstaffNameInput"><strong>Dein Name:</strong></label>
+    <input type="text" id="waitstaffNameInput" placeholder="z. B. Lisa" />
+    <button onclick="setWaitstaffName()">Weiter</button>
+  </div>
 
-<div id="waitstaffNameContainer">
-  <label for="waitstaffName">Name Bedienung: </label>
-  <input type="text" id="waitstaffName" placeholder="Dein Name" />
-</div>
+  <div id="app" style="display:none">
+    <h2>1. Bestellung erfassen</h2>
+    <div id="order-section"></div>
 
-<h2>1. Bestellung erfassen:</h2>
-<div id="order-section"></div>
+    <div class="special-requests-container">
+      <h2>Sonderwünsche</h2>
+      <textarea id="specialRequests" placeholder="z. B. 'Tisch 8 – Maß ohne Schaum'"></textarea>
+    </div>
 
-<div class="special-requests-container">
-  <h2>Sonderwünsche</h2>
-  <textarea id="specialRequests" placeholder="Hier können Sie spezielle Anmerkungen oder Wünsche eingeben..."></textarea>
-</div>
+    <div class="summary" id="orderTotalSummary"></div>
+    <button onclick="sendOrder()">Bestellung senden</button>
 
-<h2>2. Personen zuordnen:</h2>
-<div id="persons"></div>
-<button id="addPersonBtn" onclick="addPerson()">➕ Person&nbsp;hinzufügen</button>
+    <button id="reset" onclick="resetAll()">Zurücksetzen</button>
+  </div>
 
-<h2>Noch&nbsp;ausstehend</h2>
-<div id="remaining"></div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 
-<div class="summary" id="orderSumContainer"></div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
+      authDomain: "bierzelt-rechner.firebaseapp.com",
+      databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "bierzelt-rechner",
+      storageBucket: "bierzelt-rechner.appspot.com",
+      messagingSenderId: "322991437255",
+      appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<button id="sendOrderBtn" onclick="sendOrder()">Bestellung senden</button>
-<button id="reset" onclick="resetAll()">Zurücksetzen</button>
+    const DRINKS = [
+      { key: "mass_bier", name: "🍺 Maß Bier", price: 8.9 },
+      { key: "halbe_bier", name: "🍻 Halbe Bier", price: 4.8 },
+      { key: "mass_radler", name: "🍺🍋 Maß Radler", price: 8.9 },
+      { key: "halbe_radler", name: "🍻🍋 Halbe Radler", price: 4.8 },
+      { key: "mass_bier_alkfrei", name: "🍺 Maß Bier Alkoholfrei", price: 8.9 },
+      { key: "halbe_bier_alkfrei", name: "🍻 Halbe Bier Alkoholfrei", price: 4.8 },
+      { key: "mass_radler_alkfrei", name: "🍺🍋 Maß Radler Alkoholfrei", price: 8.9 },
+      { key: "halbe_radler_alkfrei", name: "🍻🍋 Halbe Radler Alkoholfrei", price: 4.8 },
+      { key: "weinschorle", name: "🍷 Weinschorle", price: 4.6 },
+      { key: "aperol", name: "🍊 Aperol", price: 6.0 },
+      { key: "apfelschorle", name: "🍎 Apfelschorle", price: 3.2 },
+      { key: "limo_gelb", name: "🍋 Limo gelb", price: 3.2 },
+      { key: "limo_weiss", name: "⚪️ Limo weiß", price: 3.2 },
+      { key: "spezi", name: "🥤 Spezi", price: 3.2 },
+      { key: "wasser", name: "💧 Wasser", price: 3.2 },
+    ];
+    const drinkMap = Object.fromEntries(DRINKS.map(d => [d.key, d]));
 
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    let waitstaffName = localStorage.getItem("waitstaffName");
+    const order = {};
+    DRINKS.forEach(d => order[d.key] = 0);
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDz7S1YcdJ7Tm3F7YLUpT61esfDlIbAH08",
-  authDomain: "bierzelt-rechner.firebaseapp.com",
-  databaseURL: "https://bierzelt-rechner-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "bierzelt-rechner",
-  storageBucket: "bierzelt-rechner.firebasestorage.app",
-  messagingSenderId: "322991437255",
-  appId: "1:322991437255:web:74a25783bf98433a0fd5e2"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-firebase.auth().signInAnonymously()
-  .then(() => {
-    console.log('Angemeldet als anonym');
-    initApp();
-  })
-  .catch((error) => {
-    console.error('Fehler bei anonymer Anmeldung:', error);
-    alert('Anmeldung fehlgeschlagen – bitte Seite neu laden.');
-  });
-
-const DRINKS=[
-  {key:"mass_bier",   name:"🍺 Maß Bier",           price:8.9},
-  {key:"halbe_bier",  name:"🍻 Halbe Bier",         price:4.8},
-  {key:"mass_radler", name:"🍺🍋 Maß Radler",       price:8.9},
-  {key:"halbe_radler",name:"🍻🍋 Halbe Radler",     price:4.8},
-  {key:"mass_bier_alkfrei",   name:"🍺 Maß Bier Alkoholfrei",   price:8.9},
-  {key:"halbe_bier_alkfrei",  name:"🍻 Halbe Bier Alkoholfrei", price:4.8},
-  {key:"mass_radler_alkfrei", name:"🍺🍋 Maß Radler Alkoholfrei", price:8.9},
-  {key:"halbe_radler_alkfrei",name:"🍻🍋 Halbe Radler Alkoholfrei", price:4.8},
-  {key:"weinschorle", name:"🍷 Weinschorle",         price:4.6},
-  {key:"aperol",      name:"🍊 Aperol",             price:6.0},
-  {key:"apfelschorle",name:"🍎 Apfelschorle",       price:3.2},
-  {key:"limo_gelb",   name:"🍋 Limo gelb",          price:3.2},
-  {key:"limo_weiss",  name:"⚪️ Limo weiß",          price:3.2},
-  {key:"spezi",       name:"🥤 Spezi",              price:3.2},
-  {key:"wasser",      name:"💧 Wasser",             price:3.2}
-];
-
-const drinkMap=Object.fromEntries(DRINKS.map(d=>[d.key,d]));
-
-let order={};
-DRINKS.forEach(d=>order[d.key]=0);
-
-let persons=[];
-
-function initApp(){
-  addPerson(); 
-  renderOrder();
-}
-
-function format(eur){return eur.toFixed(2).replace('.',',')+' €'}
-
-function renderOrder(){
-  const el=document.getElementById('order-section');
-  el.innerHTML='';
-  let totalOrderSum = 0;
-
-  DRINKS.forEach(d=>{
-    const div=document.createElement('div');
-    div.className='item';
-    div.innerHTML=`<span class="name">${d.name} (${format(d.price)})</span>
-      <button onclick="changeOrder('${d.key}',-1)">−</button>
-      <span class="count" id="order-${d.key}">${order[d.key]}</span>
-      <button onclick="changeOrder('${d.key}',1)">+</button>`;
-    el.appendChild(div);
-
-    totalOrderSum += order[d.key] * d.price;
-  });
-
-  renderAll();
-
-  // Gesamtsumme + Sonderwünsche unten anzeigen
-  document.getElementById('orderSumContainer').innerHTML = `
-    <div><strong>Gesamtsumme Bestellung: ${format(totalOrderSum)}</strong></div>
-  `;
-}
-
-function changeOrder(key,delta){
-  order[key]=Math.max(0,order[key]+delta);
-  document.getElementById('order-'+key).textContent=order[key];
-  adjustAssignmentsAfterOrderChange(key);
-  renderAll();
-}
-
-function adjustAssignmentsAfterOrderChange(key){
-  let available=order[key];
-  persons.forEach(p=>{
-    if(p.drinks[key]>available){
-      p.drinks[key]=available;
-    }
-    available-=p.drinks[key];
-  });
-}
-
-function addPerson(){
-  const id = persons.length > 0 ? Math.max(...persons.map(p => p.id)) + 1 : 0;
-  const person={id,name:`Person ${id+1}`,drinks:{}};
-  DRINKS.forEach(d=>person.drinks[d.key]=0);
-  persons.push(person);
-  renderAll();
-  autoAssignRemainingDrinks(id);
-}
-
-function confirmDeletePerson(personId) {
-  const person = persons.find(p => p.id === personId);
-  if (!person) return;
-
-  const confirmation = confirm(`Möchten Sie ${person.name} wirklich löschen? Alle zugewiesenen Getränke werden freigegeben.`);
-  if (confirmation) {
-    deletePerson(personId);
-  }
-}
-
-function deletePerson(personId) {
-  persons = persons.filter(p => p.id !== personId);
-  renderAll();
-}
-
-function autoAssignRemainingDrinks(newPersonId) {
-  let remainingDrinkKey = null;
-  let remainingAmount = 0;
-  let countOfDrinksWithRemaining = 0;
-
-  DRINKS.forEach(d => {
-    const totalOrdered = order[d.key];
-    const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[d.key], 0);
-    const leftUnassigned = totalOrdered - assignedAcrossAllPersons;
-
-    if (leftUnassigned > 0) {
-      countOfDrinksWithRemaining++;
-      remainingDrinkKey = d.key;
-      remainingAmount = leftUnassigned;
-    }
-  });
-
-  if (countOfDrinksWithRemaining === 1 && remainingDrinkKey !== null && remainingAmount > 0) {
-    const newPerson = persons.find(p => p.id === newPersonId);
-    if (newPerson) {
-      newPerson.drinks[remainingDrinkKey] += 1;
-      renderAll();
-    }
-  }
-}
-
-function changePersonDrink(personId,key,delta){
-  const p=persons.find(x=>x.id===personId);
-  if(!p) return;
-
-  const totalOrdered = order[key];
-  const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[key], 0);
-
-  if(delta > 0){
-    if (assignedAcrossAllPersons >= totalOrdered) return;
-  }
-
-  p.drinks[key]=Math.max(0,p.drinks[key]+delta);
-  renderAll();
-}
-
-function renderAll(){
-  renderPersons();
-  renderRemaining();
-  updateOrderSum();
-}
-
-function renderPersons(){
-  const container=document.getElementById('persons');
-  container.innerHTML='';
-  persons.forEach(p=>{
-    const card=document.createElement('div');
-    card.className='person-card';
-    
-    let personTitleHtml = `<div class="person-title-row">
-                             <strong>${p.name}</strong>`;
-    
-    if (persons.length > 1 && p.id !== 0) { 
-      personTitleHtml += `<button class="delete-person-btn" onclick="confirmDeletePerson(${p.id})">✖</button>`;
-    }
-    personTitleHtml += `</div>`;
-    card.innerHTML = personTitleHtml;
-
-    let sum=0;
-    DRINKS.forEach(d=>{
-      const totalOrdered = order[d.key];
-      const assignedAcrossAllPersons = persons.reduce((s, per) => s + per.drinks[d.key], 0);
-      const leftUnassigned = totalOrdered - assignedAcrossAllPersons;
-
-      if ( (totalOrdered > 0 && leftUnassigned > 0) || (p.drinks[d.key] > 0) ) {
-        const c=p.drinks[d.key];
-        sum+=c*d.price;
-        card.innerHTML+=`<div class="drink-row">
-          <span class="label">${d.name}</span>
-          <button onclick="changePersonDrink(${p.id},'${d.key}',-1)">−</button>
-          <span class="count">${c}</span>
-          <button onclick="changePersonDrink(${p.id},'${d.key}',1)">+</button>
-        </div>`;
+    function setWaitstaffName() {
+      const input = document.getElementById("waitstaffNameInput");
+      const name = input.value.trim();
+      if (!name) {
+        alert("Bitte gib deinen Namen ein.");
+        return;
       }
-    });
-    card.innerHTML+=`<div class="summary">Summe: ${format(sum)}</div>`;
-    container.appendChild(card);
-  });
-
-  document.getElementById('addPersonBtn').style.display = 'block';
-}
-
-function renderRemaining(){
-  const div=document.getElementById('remaining');
-  div.innerHTML='';
-  DRINKS.forEach(d=>{
-    const total=order[d.key];
-    if (total > 0) {
-      const assigned=persons.reduce((s,p)=>s+p.drinks[d.key],0);
-      const left=total-assigned;
-      const cls=left===0?'done':'unassigned';
-      div.innerHTML+=`<div class="${cls}">${d.name}: ${left} ${left===0?'✔️':'ausstehend'}</div>`;
+      waitstaffName = name;
+      localStorage.setItem("waitstaffName", name);
+      document.getElementById("waitstaffNamePrompt").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      renderOrder();
     }
-  });
-}
 
-function updateOrderSum(){
-  let totalOrderSum = 0;
-  DRINKS.forEach(d=>{
-    totalOrderSum += order[d.key] * d.price;
-  });
-  document.getElementById('orderSumContainer').innerHTML = `<div><strong>Gesamtsumme Bestellung: ${format(totalOrderSum)}</strong></div>`;
-}
+    function renderOrder() {
+      const el = document.getElementById("order-section");
+      el.innerHTML = "";
+      let total = 0;
+      DRINKS.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <span class="name">${d.name} (${format(d.price)})</span>
+          <button onclick="changeOrder('${d.key}', -1)">−</button>
+          <span class="count" id="count-${d.key}">${order[d.key]}</span>
+          <button onclick="changeOrder('${d.key}', 1)">+</button>
+        `;
+        el.appendChild(div);
+        total += order[d.key] * d.price;
+      });
+      document.getElementById("orderTotalSummary").textContent = `Gesamtsumme Bestellung: ${format(total)}`;
+    }
 
-function resetAll(){
-  DRINKS.forEach(d=>order[d.key]=0);
-  persons=[];
-  addPerson();
-  renderOrder();
-  document.getElementById('specialRequests').value = '';
-  document.getElementById('waitstaffName').value = '';
-}
+    function changeOrder(key, delta) {
+      order[key] = Math.max(0, order[key] + delta);
+      document.getElementById(`count-${key}`).textContent = order[key];
+      renderOrder(); // Damit auch Summe neu berechnet wird
+    }
 
-function sendOrder(){
-  const waitstaffName = document.getElementById('waitstaffName').value.trim();
-  if(!waitstaffName){
-    alert('Bitte Name der Bedienung eingeben!');
-    return;
-  }
-  // Prüfen, ob es Bestellungen gibt
-  const totalDrinks = Object.values(order).reduce((a,b) => a + b, 0);
-  if(totalDrinks === 0){
-    alert('Keine Getränke bestellt!');
-    return;
-  }
-  const specialRequests = document.getElementById('specialRequests').value.trim();
+    function format(eur) {
+      return eur.toFixed(2).replace(".", ",") + " €";
+    }
 
-  const orderData = {
-    waitstaffName,
-    orderQuantities: {...order},
-    persons: persons.map(p => ({ name: p.name, drinks: {...p.drinks} })),
-    specialRequests,
-    timestamp: Date.now()
-  };
+    function sendOrder() {
+      const totalDrinks = Object.values(order).reduce((sum, v) => sum + v, 0);
+      if (totalDrinks === 0) {
+        alert("Bitte mindestens ein Getränk auswählen.");
+        return;
+      }
 
-  // Schreibe in Firebase Realtime Database
-  const db = firebase.database();
-  const newOrderKey = db.ref().child('bierzelt/orders').push().key;
+      const specialRequests = document.getElementById("specialRequests").value.trim();
+      const payload = {
+        waitstaffName,
+        orderQuantities: { ...order },
+        specialRequests,
+        timestamp: Date.now()
+      };
 
-  db.ref('bierzelt/orders/' + newOrderKey).set(orderData)
-    .then(() => {
-      alert('Bestellung erfolgreich gesendet!');
-      resetAll();
-    })
-    .catch(err => {
-      console.error('Fehler beim Senden:', err);
-      alert('Fehler beim Senden der Bestellung.');
-    });
-}
-</script>
+      db.ref("bierzelt/orders").push(payload).then(() => {
+        alert("Bestellung gesendet!");
+        resetAll();
+      }).catch(err => {
+        alert("Fehler beim Senden: " + err.message);
+      });
+    }
 
+    function resetAll() {
+      DRINKS.forEach(d => order[d.key] = 0);
+      renderOrder();
+      document.getElementById("specialRequests").value = "";
+    }
+
+    // Automatischer Start, wenn Name schon gespeichert ist
+    if (waitstaffName) {
+      document.getElementById("waitstaffNamePrompt").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      renderOrder();
+    }
+  </script>
 </body>
 </html>
